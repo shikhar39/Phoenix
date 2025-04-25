@@ -92,7 +92,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="App.cpp" />
+    <ClCompile Include="Device.cpp" />
     <ClCompile Include="DXContext.cpp" />
+    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="VulkanRenderer.cpp" />
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -101,7 +105,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="App.h" />
+    <ClInclude Include="Device.h" />
     <ClInclude Include="DXContext.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="VulkanRenderer.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
