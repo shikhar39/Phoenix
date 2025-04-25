@@ -1,10 +1,11 @@
 #pragma once
 
 
-class DXWindow
+class Window
 {
 public:
 	bool Init();
+	~Window();
 private:
 	ATOM m_wndClass = 0;
 	HWND m_window = nullptr;

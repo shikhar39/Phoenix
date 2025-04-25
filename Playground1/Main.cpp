@@ -1,7 +1,8 @@
 #include "stdafx.h"
-#include "DXWindow.h"
+#include "Window.h"
 
-void main() {
-	DXWindow dxwin;
-	dxwin.Init();
+int main() {
+	Window glfwWin;
+	glfwWin.Init();
+	return 0;
 }
