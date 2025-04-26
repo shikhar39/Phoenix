@@ -1,23 +1,30 @@
 #pragma once
 
+#include <glfw3.h>
+#include <string>
 
-class Window
-{
-public:
-	bool Init();
-	~Window();
-private:
-	ATOM m_wndClass = 0;
-	HWND m_window = nullptr;
+namespace PhoenixEngine {
+    class Window {
+        public:
+        Window(int inWidth, int inHeight, std::string inName);
+        virtual ~Window();
 
-	UINT m_width = 800;
-	UINT m_height = 600;
+        Window(const Window&) = delete;
+        Window& operator=(const Window&) = delete;
 
-	static constexpr size_t FrameCount = 2;
-	static constexpr size_t GetFrameCount() {
-		return FrameCount;
-	}
-private:
-	static LRESULT CALLBACK OnWindowMessage(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam);
-};
+        bool shouldClose() const { return glfwWindowShouldClose(window); }
+        
+        private:
+        void init();
+        
+        int width;
+        int height;
 
+        std::string name;
+
+        GLFWwindow* window;
+
+        protected:
+        virtual void setupHandle() = 0; // Putting this in to try making the class abstract.
+    };
+}

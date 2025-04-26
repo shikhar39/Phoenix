@@ -1,8 +1,11 @@
 #include "stdafx.h"
-#include "Window.h"
+
+#include "App.h"
 
 int main() {
-	Window glfwWin;
-	glfwWin.Init();
+
+	PhoenixEngine::App app;
+	app.run();
+	
 	return 0;
 }

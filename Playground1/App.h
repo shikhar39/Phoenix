@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Window.h"
-#include "Device.h"
-#include "Renderer.h"
+#include "Vulkan/Window.h"
+// #include "Device.h"
+// #include "Renderer.h"
 
 namespace PhoenixEngine {
     class App {
@@ -21,8 +21,8 @@ namespace PhoenixEngine {
         void run();
         private:		
 
-        Window window{WIDTH, HEIGHT, "Phoenix"};
-        Device device{ window };
-        Renderer renderer{ window, device };
+        Vulkan::Window window{WIDTH, HEIGHT, "Phoenix"};
+        // Device device;
+        // Renderer renderer;
     };
 }
