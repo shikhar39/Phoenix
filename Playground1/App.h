@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vulkan/Window.h"
+#include "Vulkan/VulkanWindow.h"
 // #include "Device.h"
 // #include "Renderer.h"
 
@@ -8,7 +8,7 @@ namespace PhoenixEngine {
     class App {
 
         public:
-        static constexpr int WIDTH = 800;
+        static constexpr int WIDTH = 800; // Should we make width and height a property of the window rather than the app 
         static constexpr int HEIGHT = 600;
 
 
@@ -21,7 +21,7 @@ namespace PhoenixEngine {
         void run();
         private:		
 
-        Vulkan::Window window{WIDTH, HEIGHT, "Phoenix"};
+        Vulkan::VulkanWindow window{WIDTH, HEIGHT, "Phoenix"};
         // Device device;
         // Renderer renderer;
     };

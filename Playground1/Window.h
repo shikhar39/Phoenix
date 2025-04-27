@@ -15,7 +15,7 @@ namespace PhoenixEngine {
         bool shouldClose() const { return glfwWindowShouldClose(window); }
         
         private:
-        void init();
+        virtual void init();
         
         int width;
         int height;
