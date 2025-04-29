@@ -4,10 +4,10 @@
 
 namespace PhoenixEngine {
     namespace Vulkan {
-        class VulkanWindow : public PhoenixEngine::Window {
+        class Window : public PhoenixEngine::Window {
             public:
-            VulkanWindow(int inWidth, int inHeight, std::string inName);
-            ~VulkanWindow() {};
+            Window(int inWidth, int inHeight, std::string inName);
+            ~Window() {};
             
             protected:
             void setupHandle() override {};

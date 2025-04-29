@@ -21,7 +21,11 @@ namespace PhoenixEngine {
         void run();
         private:		
 
-        Vulkan::VulkanWindow window{WIDTH, HEIGHT, "Phoenix"};
+#ifdef _VK
+        Vulkan::Window window{WIDTH, HEIGHT, "Phoenix"};
+#elif _DX12
+        DX12::Window window2{WIDTH, HEIGHT, "Phoenix"};        
+#endif
         // Device device;
         // Renderer renderer;
     };

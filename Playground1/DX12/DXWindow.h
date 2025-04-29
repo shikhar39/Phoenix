@@ -4,10 +4,10 @@
 
 namespace PhoenixEngine {
     namespace DX12 {
-        class DXWindow : public PhoenixEngine::Window {
+        class Window : public PhoenixEngine::Window {
             public:
-            DXWindow(int inWidth, int inHeight, std::string inName);
-            ~DXWindow() {}
+            Window(int inWidth, int inHeight, std::string inName);
+            ~Window() {}
 
             protected:
             void setupHandle() override {};
