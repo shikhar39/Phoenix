@@ -1,9 +1,11 @@
 #pragma once
 
+#include "EngineChoice.h"
 #include "Vulkan/VulkanWindow.h"
+#include "DX12/DXWindow.h"
+
 // #include "Device.h"
 // #include "Renderer.h"
-
 namespace PhoenixEngine {
     class App {
 
@@ -23,8 +25,10 @@ namespace PhoenixEngine {
 
 #ifdef _VK
         Vulkan::Window window{WIDTH, HEIGHT, "Phoenix"};
-#elif _DX12
-        DX12::Window window2{WIDTH, HEIGHT, "Phoenix"};        
+# else
+    #ifdef _DX12
+        DX12::Window window{WIDTH, HEIGHT, "Phoenix"};
+    #endif
 #endif
         // Device device;
         // Renderer renderer;

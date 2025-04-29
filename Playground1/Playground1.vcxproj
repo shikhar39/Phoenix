@@ -111,6 +111,7 @@
     <ClInclude Include="Device.h" />
     <ClInclude Include="DX12\DXContext.h" />
     <ClInclude Include="DX12\DXWindow.h" />
+    <ClInclude Include="EngineChoice.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Vulkan\VulkanWindow.h" />
     <ClInclude Include="Window.h" />
