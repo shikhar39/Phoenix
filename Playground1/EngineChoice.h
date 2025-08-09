@@ -1,2 +1,2 @@
-// #define _VK
-#define _DX12
+#define _VK
+// #define _DX12

@@ -1,0 +1,3 @@
+{
+  "queue-family-properties": ["graphics", "present"]
+}

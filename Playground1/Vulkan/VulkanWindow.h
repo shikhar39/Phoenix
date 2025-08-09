@@ -11,7 +11,6 @@ namespace PhoenixEngine {
             
             protected:
             void setupHandle() override {};
-
         };
     }
 }

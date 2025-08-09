@@ -3,6 +3,7 @@
 #include "EngineChoice.h"
 #include "Vulkan/VulkanWindow.h"
 #include "DX12/DXWindow.h"
+#include "Vulkan/VulkanDevice.h"
 
 // #include "Device.h"
 // #include "Renderer.h"
@@ -25,6 +26,7 @@ namespace PhoenixEngine {
 
 #ifdef _VK
         Vulkan::Window window{WIDTH, HEIGHT, "Phoenix"};
+        Vulkan::Device device;
 # else
     #ifdef _DX12
         DX12::Window window{WIDTH, HEIGHT, "Phoenix"};
