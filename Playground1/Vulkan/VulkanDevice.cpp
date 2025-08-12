@@ -43,56 +43,96 @@ namespace PhoenixEngine {
             }
         }
         
-        Device::Device() {
+        Device::Device(Vulkan::Window& window) {
             createInstance();
+            createSurface(window);
             choosePhysicalDevice();
             setupDebugMessenger();
         }
 
+        bool Device::isDeviceSuitable(VkPhysicalDevice& device) {
+            uint32_t queueFamilyCount;
+            vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+            std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
+            // Assign the queue family properties to the vector
+            vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilyProperties.data());
+            bool deviceSupportsPresentation = false;
+            bool deviceHasGraphcisAndComputeQueue = false;
+            for (int j = 0; j < queueFamilyCount; j++)
+            {
+                VkBool32 supportsPresentation;
+                vkGetPhysicalDeviceSurfaceSupportKHR(device, j, surface, &supportsPresentation);
+                if (supportsPresentation == VK_TRUE)
+                {
+                    deviceSupportsPresentation = true;
+                    std::cout << "Queue Family " << j << " supports presentation" << std::endl;
+                }
+                if ((queueFamilyProperties[j].queueFlags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)))
+                {
+                    deviceHasGraphcisAndComputeQueue = true;
+                    std::cout << "Queue found that has Graphics, Compute queue family and supports presentation" << std::endl;
+                }
+            }
+			return (deviceSupportsPresentation && deviceHasGraphcisAndComputeQueue);
+        }
         void Device::choosePhysicalDevice()
         {
             uint32_t deviceCount;
-
+			// Get number of physical devices available
             vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
             std::cout << "Found " << deviceCount << " devices" << std::endl;
 
             std::vector<VkPhysicalDevice> devices(deviceCount);
-
+			// Assign the devices to devices vector
             vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
             std::vector<VkPhysicalDeviceProperties> deviceProperties(deviceCount);
             // std::vector<std::vector<VkQueueFamilyProperties>> queueFamilyProperties(deviceCount);
-
-            for (int  i = 0; i < deviceCount; i++)
+			VkPhysicalDevice integratedSuitableDevice = VK_NULL_HANDLE;
+            VkPhysicalDevice nonDiscreteSuitableDevice = VK_NULL_HANDLE;
+            for (int i = 0; i < deviceCount; i++)
             {
-                vkGetPhysicalDeviceProperties(devices[i], &deviceProperties[i]);
-                std::cout << "Device Name: " << deviceProperties[i].deviceName <<  std::endl;
-
-                uint32_t queueFamilyPropertyCount;
-
-                vkGetPhysicalDeviceQueueFamilyProperties(devices[i], &queueFamilyPropertyCount, nullptr);
-
-                std::cout << "Queue Families Found: " << queueFamilyPropertyCount << std::endl;
-
-                std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyPropertyCount);
-                vkGetPhysicalDeviceQueueFamilyProperties(devices[i], &queueFamilyPropertyCount, queueFamilyProperties.data());
-
-
-                for (int j = 0; j < queueFamilyPropertyCount; j++)
-                {
-                    if (queueFamilyProperties[j].queueFlags & VK_QUEUE_COMPUTE_BIT)
-                    {
-                        std::cout << "Compute Queue Here!" << std::endl;
+                VkPhysicalDeviceProperties currentDeviceProperties;
+                vkGetPhysicalDeviceProperties(devices[i], &currentDeviceProperties);
+                bool isSuitable = isDeviceSuitable(devices[i]);
+                if (isSuitable) {
+                    std::cout << "Device Found!: " << currentDeviceProperties.deviceName << std::endl;
+                    if (currentDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+                        std::cout << " Discrete GPU Found!: " << currentDeviceProperties.deviceName << std::endl;
+						physicalDevice = devices[i];
+                        return; // We found a suitable discrete GPU, no need to continue searching
+                    }
+                    else if (currentDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU){
+						integratedSuitableDevice = devices[i];
+                    }
+                    else {
+                        if (!nonDiscreteSuitableDevice) {
+                            nonDiscreteSuitableDevice = devices[i];
+                        }
                     }
                 }
-                
-                
+                else {
+                    continue; // Skip unsuitable devices
+                }
             }
-
-            
+            if (integratedSuitableDevice != VK_NULL_HANDLE) {
+				physicalDevice = integratedSuitableDevice;
+			}
+            else if (nonDiscreteSuitableDevice != VK_NULL_HANDLE) {
+				physicalDevice = nonDiscreteSuitableDevice;
+            }
+            else {
+				throw std::runtime_error("failed to find a suitable GPU!"); 
+            }
         }
+            
         
+        void Device::createSurface (Vulkan::Window& window) {
+            
+            window.createSurface(instance, surface);
+        }
+
         void Device::createInstance() {
             if (enableValidationLayers && !checkValidationLayerSupport()) {
                 throw std::runtime_error("validation layers requested, but not available!");

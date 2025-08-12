@@ -23,9 +23,9 @@ namespace PhoenixEngine {
 
         std::string name;
 
-        GLFWwindow* window;
 
         protected:
+        GLFWwindow* window;
         virtual void setupHandle() = 0; // Putting this in to try making the class abstract.
     };
 }

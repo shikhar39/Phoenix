@@ -401,3 +401,7 @@ FodyWeavers.xsd
 
 # Engine Choice
 EngineChoice.h
+
+# Ext
+ext/vulkan
+ext/spdlog

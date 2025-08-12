@@ -9,6 +9,7 @@ namespace PhoenixEngine {
             Window(int inWidth, int inHeight, std::string inName);
             ~Window() {};
             
+            void createSurface(VkInstance& instance, VkSurfaceKHR& surface);
             protected:
             void setupHandle() override {};
         };

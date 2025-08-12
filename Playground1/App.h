@@ -26,7 +26,7 @@ namespace PhoenixEngine {
 
 #ifdef _VK
         Vulkan::Window window{WIDTH, HEIGHT, "Phoenix"};
-        Vulkan::Device device;
+        Vulkan::Device device{ window };
 # else
     #ifdef _DX12
         DX12::Window window{WIDTH, HEIGHT, "Phoenix"};

@@ -15,13 +15,15 @@ namespace PhoenixEngine {
 #endif
             
             public:
-            Device();
+             Device(Vulkan::Window &window);
             ~Device();
 
         private:
             void choosePhysicalDevice();
             void createInstance();
             void setupDebugMessenger();
+			void createSurface(Vulkan::Window&);
+            bool isDeviceSuitable(VkPhysicalDevice&);
 
             std::vector<const char *> getRequiredExtensions();
             bool checkValidationLayerSupport() const;
@@ -29,6 +31,9 @@ namespace PhoenixEngine {
 
             VkInstance instance;
             VkDebugUtilsMessengerEXT debugMessenger;
+            VkSurfaceKHR surface;
+			VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+			
 
             const std::vector<const char *> validationLayers = { "VK_LAYER_KHRONOS_validation" };
         };
