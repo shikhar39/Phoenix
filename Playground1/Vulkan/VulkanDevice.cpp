@@ -2,21 +2,23 @@
 #include "VulkanDevice.h"
 
 #include <vector>
+#include <spdlog/fmt/ranges.h>
 
 namespace PhoenixEngine {
     namespace Vulkan {
         // local callback functions
-        static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+        static VkBool32 VKAPI_CALL debugCallback(
             VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
             VkDebugUtilsMessageTypeFlagsEXT messageType,
-            const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-            void *pUserData) {
+            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+            void* pUserData)
+        {
             std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
             return VK_FALSE;
         }
 
-        VkResult CreateDebugUtilsMessengerEXT(
+        static VkResult CreateDebugUtilsMessengerEXT(
             VkInstance instance,
             const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
             const VkAllocationCallbacks *pAllocator,
@@ -31,7 +33,7 @@ namespace PhoenixEngine {
             }
         }
 
-        void DestroyDebugUtilsMessengerEXT(
+        static void DestroyDebugUtilsMessengerEXT(
             VkInstance instance,
             VkDebugUtilsMessengerEXT debugMessenger,
             const VkAllocationCallbacks *pAllocator) {
@@ -43,67 +45,95 @@ namespace PhoenixEngine {
             }
         }
         
-        Device::Device(Vulkan::Window& window) {
+        Device::Device(const Vulkan::Window& window) {
             createInstance();
+            setupDebugMessenger();
             createSurface(window);
             choosePhysicalDevice();
-            setupDebugMessenger();
+            createLogicalDevice();
         }
 
-        bool Device::isDeviceSuitable(VkPhysicalDevice& device) {
-            uint32_t queueFamilyCount;
+        QueueFamilyIndices Device::findQueueFamilies(const VkPhysicalDevice& device) const
+        {
+            uint32_t queueFamilyCount = 0;
             vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-            std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
+
+            std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+
             // Assign the queue family properties to the vector
-            vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilyProperties.data());
-            bool deviceSupportsPresentation = false;
-            bool deviceHasGraphcisAndComputeQueue = false;
+            vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+            QueueFamilyIndices indices;
+
             for (int j = 0; j < queueFamilyCount; j++)
             {
                 VkBool32 supportsPresentation;
                 vkGetPhysicalDeviceSurfaceSupportKHR(device, j, surface, &supportsPresentation);
-                if (supportsPresentation == VK_TRUE)
+                if (supportsPresentation)
                 {
-                    deviceSupportsPresentation = true;
-                    std::cout << "Queue Family " << j << " supports presentation" << std::endl;
+                    indices.presentFamily = j;
+                    indices.hasPresentFamily = true;
+                    spdlog::info("QueueFamily: {} supports presentation", indices.presentFamily);
+                    // std::cout << "Queue Family " << j << " supports presentation" << std::endl;
                 }
-                if ((queueFamilyProperties[j].queueFlags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)))
+                if (queueFamilies[j].queueFlags & VK_QUEUE_GRAPHICS_BIT)
                 {
-                    deviceHasGraphcisAndComputeQueue = true;
-                    std::cout << "Queue found that has Graphics, Compute queue family and supports presentation" << std::endl;
+                    indices.graphicsFamily = j;
+                    indices.hasGraphicsFamily = true;
+                    spdlog::info("QueueFamily: {} supports graphics", indices.graphicsFamily);
+                }
+                if (indices.isComplete())
+                {
+                    break;
                 }
             }
-			return (deviceSupportsPresentation && deviceHasGraphcisAndComputeQueue);
+            
+            return indices;
         }
+        
+        bool Device::isDeviceSuitable(const VkPhysicalDevice& device) {
+            QueueFamilyIndices indices = findQueueFamilies(device);
+            
+            return indices.isComplete();
+        }
+        
         void Device::choosePhysicalDevice()
         {
             uint32_t deviceCount;
-			// Get number of physical devices available
+
+            // Get number of physical devices available
             vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
-            std::cout << "Found " << deviceCount << " devices" << std::endl;
-
+            spdlog::info("Found {} physical devices", deviceCount);
+            
             std::vector<VkPhysicalDevice> devices(deviceCount);
-			// Assign the devices to devices vector
+
+            // Assign the devices to device vector
             vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
             std::vector<VkPhysicalDeviceProperties> deviceProperties(deviceCount);
-            // std::vector<std::vector<VkQueueFamilyProperties>> queueFamilyProperties(deviceCount);
-			VkPhysicalDevice integratedSuitableDevice = VK_NULL_HANDLE;
+
+            VkPhysicalDevice integratedSuitableDevice = VK_NULL_HANDLE;
             VkPhysicalDevice nonDiscreteSuitableDevice = VK_NULL_HANDLE;
-            for (int i = 0; i < deviceCount; i++)
+
+            for (uint32_t i = 0; i < deviceCount; i++)
             {
                 VkPhysicalDeviceProperties currentDeviceProperties;
                 vkGetPhysicalDeviceProperties(devices[i], &currentDeviceProperties);
+
+                spdlog::info("Checking current device: {}", currentDeviceProperties.deviceName);
                 bool isSuitable = isDeviceSuitable(devices[i]);
+
                 if (isSuitable) {
-                    std::cout << "Device Found!: " << currentDeviceProperties.deviceName << std::endl;
+                    spdlog::info("{} has required queue families", currentDeviceProperties.deviceName);
+
                     if (currentDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-                        std::cout << " Discrete GPU Found!: " << currentDeviceProperties.deviceName << std::endl;
+                        spdlog::info("{} is discrete. Selecting...", currentDeviceProperties.deviceName);
+                        
 						physicalDevice = devices[i];
                         return; // We found a suitable discrete GPU, no need to continue searching
                     }
-                    else if (currentDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU){
+                    if (currentDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU){
 						integratedSuitableDevice = devices[i];
                     }
                     else {
@@ -112,10 +142,9 @@ namespace PhoenixEngine {
                         }
                     }
                 }
-                else {
-                    continue; // Skip unsuitable devices
-                }
+                //Loop ends here.
             }
+
             if (integratedSuitableDevice != VK_NULL_HANDLE) {
 				physicalDevice = integratedSuitableDevice;
 			}
@@ -128,9 +157,14 @@ namespace PhoenixEngine {
         }
             
         
-        void Device::createSurface (Vulkan::Window& window) {
-            
+        void Device::createSurface (const Vulkan::Window& window) {
             window.createSurface(instance, surface);
+        }
+
+        void Device::createLogicalDevice()
+        {
+            VkDeviceCreateInfo createInfo = {};
+            createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         }
 
         void Device::createInstance() {
@@ -180,7 +214,8 @@ namespace PhoenixEngine {
             }
         }
         
-        std::vector<const char*> Device::getRequiredExtensions() {
+        std::vector<const char*> Device::getRequiredExtensions() const
+        {
             uint32_t glfwExtensionCount;
             const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
@@ -191,13 +226,13 @@ namespace PhoenixEngine {
             std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
             vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, availableExtensions.data());
             
-            std::cout << "GLFW Required Instance Extensions:\n";
+            spdlog::info("GLFW required extensions: {}", extensions);
             for (const auto& glfwExtension : extensions) {
-                std::cout << glfwExtension << '\n';
-
                 bool found = false;
+
                 for (const auto& availableExtension : availableExtensions) {
                     if (strcmp(availableExtension.extensionName, glfwExtension) == 0) {
+                        spdlog::info("Found extension: {}", availableExtension.extensionName);
                         found = true;
                     }
                 }
@@ -209,7 +244,7 @@ namespace PhoenixEngine {
             if (enableValidationLayers) {
                 extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
             }
-
+            
             return extensions;
         }
 
@@ -256,7 +291,8 @@ namespace PhoenixEngine {
             if (enableValidationLayers) {
                 DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
             }
-            
+
+            vkDestroySurfaceKHR(instance, surface, nullptr);
             vkDestroyInstance(instance, nullptr);
         }
     }
