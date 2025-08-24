@@ -74,7 +74,6 @@ namespace PhoenixEngine {
                     indices.presentFamily = j;
                     indices.hasPresentFamily = true;
                     spdlog::info("QueueFamily: {} supports presentation", indices.presentFamily);
-                    // std::cout << "Queue Family " << j << " supports presentation" << std::endl;
                 }
                 if (queueFamilies[j].queueFlags & VK_QUEUE_GRAPHICS_BIT)
                 {
@@ -163,8 +162,45 @@ namespace PhoenixEngine {
 
         void Device::createLogicalDevice()
         {
+            QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+            
             VkDeviceCreateInfo createInfo = {};
             createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+            createInfo.enabledExtensionCount = 0;
+            createInfo.ppEnabledExtensionNames = nullptr;
+            createInfo.enabledLayerCount = 0;
+            createInfo.ppEnabledLayerNames = nullptr;
+            createInfo.pEnabledFeatures = nullptr;
+
+            float queuePriority[] = {1.0f, 1.0f};
+            
+            VkDeviceQueueCreateInfo graphicsQueueCreateInfo = {};
+            graphicsQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            graphicsQueueCreateInfo.queueFamilyIndex = indices.graphicsFamily;
+            graphicsQueueCreateInfo.queueCount = 2;
+            graphicsQueueCreateInfo.pQueuePriorities = queuePriority;
+            graphicsQueueCreateInfo.pNext = nullptr;
+
+            // VkDeviceQueueCreateInfo presentQueueCreateInfo = {};
+            // presentQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            // presentQueueCreateInfo.queueFamilyIndex = indices.presentFamily;
+            // presentQueueCreateInfo.queueCount = 1;
+            // presentQueueCreateInfo.pQueuePriorities = &queuePriority;
+            // presentQueueCreateInfo.pNext = nullptr;
+
+            std::vector<VkDeviceQueueCreateInfo> queueCreateInfos = {graphicsQueueCreateInfo};
+
+            spdlog::info("Queues requested from {} families", queueCreateInfos.size());
+            
+            createInfo.queueCreateInfoCount = 1;
+            createInfo.pQueueCreateInfos = queueCreateInfos.data();
+            
+            createInfo.pNext = nullptr;
+
+            if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+            {
+                throw std::runtime_error("failed to create logical device!");
+            }
         }
 
         void Device::createInstance() {
@@ -292,6 +328,7 @@ namespace PhoenixEngine {
                 DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
             }
 
+            vkDestroyDevice(device, nullptr);
             vkDestroySurfaceKHR(instance, surface, nullptr);
             vkDestroyInstance(instance, nullptr);
         }

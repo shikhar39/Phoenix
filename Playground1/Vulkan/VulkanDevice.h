@@ -48,6 +48,7 @@ namespace PhoenixEngine {
             VkDebugUtilsMessengerEXT debugMessenger;
             VkSurfaceKHR surface;
 			VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+            VkDevice device;
             
             const std::vector<const char *> validationLayers = { "VK_LAYER_KHRONOS_validation" };
         };
