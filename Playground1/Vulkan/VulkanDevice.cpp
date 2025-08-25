@@ -45,7 +45,7 @@ namespace PhoenixEngine {
             }
         }
         
-        Device::Device(const Vulkan::Window& window) {
+        Device::Device(const Vulkan::Window& window) { 
             createInstance();
             setupDebugMessenger();
             createSurface(window);
@@ -68,7 +68,7 @@ namespace PhoenixEngine {
             for (int j = 0; j < queueFamilyCount; j++)
             {
                 VkBool32 supportsPresentation;
-                vkGetPhysicalDeviceSurfaceSupportKHR(device, j, surface, &supportsPresentation);
+                vkGetPhysicalDeviceSurfaceSupportKHR(device, j, mSurface, &supportsPresentation);
                 if (supportsPresentation)
                 {
                     indices.presentFamily = j;
@@ -90,10 +90,33 @@ namespace PhoenixEngine {
             return indices;
         }
         
+
+        bool Device::checkExtensionSupport (const VkPhysicalDevice& device) const {
+            uint32_t extensionCount;
+            vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+            
+            std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+            
+            vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+			spdlog::info("Comparing available device extensions with the required ones ...");
+            std::set<std::string> requiredExtensionsSet(mRequiredDeviceExtensions.begin(), mRequiredDeviceExtensions.end());
+            for (const auto& extension : availableExtensions) {
+                requiredExtensionsSet.erase(extension.extensionName);
+            }
+            if (requiredExtensionsSet.empty()) {
+                spdlog::info("All required device extensions are supported.");
+                return true;
+			}
+            else {
+                spdlog::error("Missing required device extensions:");
+                return false;
+            }
+		}
+
         bool Device::isDeviceSuitable(const VkPhysicalDevice& device) {
             QueueFamilyIndices indices = findQueueFamilies(device);
-            
-            return indices.isComplete();
+
+            return indices.isComplete() && checkExtensionSupport(device);
         }
         
         void Device::choosePhysicalDevice()
@@ -101,14 +124,14 @@ namespace PhoenixEngine {
             uint32_t deviceCount;
 
             // Get number of physical devices available
-            vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+            vkEnumeratePhysicalDevices(mInstance, &deviceCount, nullptr);
 
             spdlog::info("Found {} physical devices", deviceCount);
             
             std::vector<VkPhysicalDevice> devices(deviceCount);
 
             // Assign the devices to device vector
-            vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+            vkEnumeratePhysicalDevices(mInstance, &deviceCount, devices.data());
 
             std::vector<VkPhysicalDeviceProperties> deviceProperties(deviceCount);
 
@@ -129,7 +152,7 @@ namespace PhoenixEngine {
                     if (currentDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
                         spdlog::info("{} is discrete. Selecting...", currentDeviceProperties.deviceName);
                         
-						physicalDevice = devices[i];
+						mPhysicalDevice = devices[i];
                         return; // We found a suitable discrete GPU, no need to continue searching
                     }
                     if (currentDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU){
@@ -145,10 +168,10 @@ namespace PhoenixEngine {
             }
 
             if (integratedSuitableDevice != VK_NULL_HANDLE) {
-				physicalDevice = integratedSuitableDevice;
+				mPhysicalDevice = integratedSuitableDevice;
 			}
             else if (nonDiscreteSuitableDevice != VK_NULL_HANDLE) {
-				physicalDevice = nonDiscreteSuitableDevice;
+				mPhysicalDevice = nonDiscreteSuitableDevice;
             }
             else {
 				throw std::runtime_error("failed to find a suitable GPU!"); 
@@ -157,21 +180,12 @@ namespace PhoenixEngine {
             
         
         void Device::createSurface (const Vulkan::Window& window) {
-            window.createSurface(instance, surface);
+            window.createSurface(mInstance, mSurface);
         }
 
         void Device::createLogicalDevice()
         {
-            QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
-            
-            VkDeviceCreateInfo createInfo = {};
-            createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-            createInfo.enabledExtensionCount = 0;
-            createInfo.ppEnabledExtensionNames = nullptr;
-            createInfo.enabledLayerCount = 0;
-            createInfo.ppEnabledLayerNames = nullptr;
-            createInfo.pEnabledFeatures = nullptr;
-
+            QueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice);
             float queuePriority[] = {1.0f, 1.0f};
             
             VkDeviceQueueCreateInfo graphicsQueueCreateInfo = {};
@@ -180,7 +194,8 @@ namespace PhoenixEngine {
             graphicsQueueCreateInfo.queueCount = 2;
             graphicsQueueCreateInfo.pQueuePriorities = queuePriority;
             graphicsQueueCreateInfo.pNext = nullptr;
-
+			// TODO: Maybe use a set to manage duplicate queue family indices
+            spdlog::warn("Maybe use a set to manage duplicate queue family indices");
             // VkDeviceQueueCreateInfo presentQueueCreateInfo = {};
             // presentQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
             // presentQueueCreateInfo.queueFamilyIndex = indices.presentFamily;
@@ -192,20 +207,34 @@ namespace PhoenixEngine {
 
             spdlog::info("Queues requested from {} families", queueCreateInfos.size());
             
+            VkDeviceCreateInfo createInfo = {};
+            createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+			// TODO: Add extensions and features when stuff starts breaking
+            spdlog::warn("Add extensions and features when stuff starts breaking");
+
+            createInfo.enabledExtensionCount = mRequiredDeviceExtensions.size();
+            createInfo.ppEnabledExtensionNames = mRequiredDeviceExtensions.data();
+            createInfo.pEnabledFeatures = nullptr;
             createInfo.queueCreateInfoCount = 1;
             createInfo.pQueueCreateInfos = queueCreateInfos.data();
-            
             createInfo.pNext = nullptr;
 
-            if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+            if (vkCreateDevice(mPhysicalDevice, &createInfo, nullptr, &mDevice) != VK_SUCCESS)
             {
                 throw std::runtime_error("failed to create logical device!");
             }
+
+			spdlog::info("Logical device created");
+
+			vkGetDeviceQueue(mDevice, indices.graphicsFamily, 0, &mGraphicsQueue);
+            vkGetDeviceQueue(mDevice, indices.presentFamily, 0, &mPresentQueue);
+			spdlog::info("Graphics and present queue handles created.");
         }
 
         void Device::createInstance() {
             if (enableValidationLayers && !checkValidationLayerSupport()) {
-                throw std::runtime_error("validation layers requested, but not available!");
+				spdlog::error("Validation layers requested, but not available!");
+                throw std::runtime_error("Validation layers requested, but not available!");
             }
 
             VkApplicationInfo appInfo = {};
@@ -227,8 +256,8 @@ namespace PhoenixEngine {
             VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
             if (enableValidationLayers) {
                 
-                createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-                createInfo.ppEnabledLayerNames = validationLayers.data();
+                createInfo.enabledLayerCount = static_cast<uint32_t>(mValidationLayers.size());
+                createInfo.ppEnabledLayerNames = mValidationLayers.data();
 
                 populateDebugMessengerCreateInfo(debugCreateInfo);
                 createInfo.pNext = &debugCreateInfo;
@@ -236,7 +265,7 @@ namespace PhoenixEngine {
                 createInfo.enabledLayerCount = 0;
                 createInfo.ppEnabledLayerNames = nullptr;
             }
-            if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
+            if (vkCreateInstance(&createInfo, nullptr, &mInstance) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create instance!");
             }
         }
@@ -245,7 +274,7 @@ namespace PhoenixEngine {
             if (!enableValidationLayers) return;
             VkDebugUtilsMessengerCreateInfoEXT createInfo;
             populateDebugMessengerCreateInfo(createInfo);
-            if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+            if (CreateDebugUtilsMessengerEXT(mInstance, &createInfo, nullptr, &mDebugMessenger) != VK_SUCCESS) {
                 throw std::runtime_error("failed to set up debug messenger!");
             }
         }
@@ -290,9 +319,11 @@ namespace PhoenixEngine {
             std::vector<VkLayerProperties> availableExtensions(availableLayerCount);
             vkEnumerateInstanceLayerProperties(&availableLayerCount, availableExtensions.data());
             
-            std::cout << "Validation Layer Required Extensions:\n";
-            for (const auto& validationExtension : validationLayers) {
-                std::cout << validationExtension << '\n';
+            spdlog::info("Validation Layer Required Extensions:");
+            for (const auto& validationExtension : mValidationLayers) {
+                spdlog::info("{}", validationExtension);
+
+                //std::cout << validationExtension << '\n';
 
                 bool found = false;
                 for (const auto& availableLayer : availableExtensions) {
@@ -325,12 +356,12 @@ namespace PhoenixEngine {
         
         Device::~Device() {
             if (enableValidationLayers) {
-                DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+                DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr);
             }
 
-            vkDestroyDevice(device, nullptr);
-            vkDestroySurfaceKHR(instance, surface, nullptr);
-            vkDestroyInstance(instance, nullptr);
+            vkDestroyDevice(mDevice, nullptr);
+            vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
+            vkDestroyInstance(mInstance, nullptr);
         }
     }
 }

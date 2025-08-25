@@ -39,18 +39,25 @@ namespace PhoenixEngine {
             
             QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice&) const;
             bool isDeviceSuitable(const VkPhysicalDevice&);
-
+            bool checkExtensionSupport(const VkPhysicalDevice& device) const ;
             std::vector<const char *> getRequiredExtensions() const;
             bool checkValidationLayerSupport() const;
             static void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &createInfo);
 
-            VkInstance instance;
-            VkDebugUtilsMessengerEXT debugMessenger;
-            VkSurfaceKHR surface;
-			VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-            VkDevice device;
-            
-            const std::vector<const char *> validationLayers = { "VK_LAYER_KHRONOS_validation" };
+            VkInstance mInstance;
+            VkDebugUtilsMessengerEXT mDebugMessenger;
+            VkSurfaceKHR mSurface;
+			VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;
+            VkDevice mDevice;
+
+			VkQueue mGraphicsQueue;
+			VkQueue mPresentQueue;
+
+            const std::vector<const char *> mValidationLayers = { "VK_LAYER_KHRONOS_validation" };
+
+            const std::vector<const char*> mRequiredDeviceExtensions = { 
+                VK_KHR_SWAPCHAIN_EXTENSION_NAME
+            };
         };
     }
 }
