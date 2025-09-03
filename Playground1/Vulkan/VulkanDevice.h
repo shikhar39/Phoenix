@@ -17,6 +17,13 @@ namespace PhoenixEngine {
 
             bool isComplete() { return hasGraphicsFamily && hasPresentFamily; }
         };
+
+        struct SwapchainSupportDetails
+        {
+            VkSurfaceCapabilitiesKHR surfaceCapabilities;
+            std::vector<VkSurfaceFormatKHR> formats;
+            std::vector<VkPresentModeKHR> presentModes;
+        };
         
         class Device {
 #ifdef NDEBUG
@@ -26,23 +33,31 @@ namespace PhoenixEngine {
 #endif
             
             public:
-             Device(const Vulkan::Window &window);
+             Device(Vulkan::Window &window);
             ~Device();
 
         private:
             void choosePhysicalDevice();
             void createInstance();
+            void createSwapchain();
+            const VkExtent2D setSwapchainExtent(VkSurfaceCapabilitiesKHR& capabilities);
+            const VkSurfaceFormatKHR& chooseSwapchainFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) const;
+            const VkPresentModeKHR chooseSwapchainPresentMode(
+                const std::vector<VkPresentModeKHR>& availablePresentModes) const;
             void setupDebugMessenger();
-			void createSurface(const Vulkan::Window&);
+			void createSurface();
             void createLogicalDevice();
 
             
             QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice&) const;
+            SwapchainSupportDetails checkSwapchainSupport(const VkPhysicalDevice&);
             bool isDeviceSuitable(const VkPhysicalDevice&);
             bool checkExtensionSupport(const VkPhysicalDevice& device) const ;
             std::vector<const char *> getRequiredExtensions() const;
             bool checkValidationLayerSupport() const;
             static void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &createInfo);
+
+            Window& mWindow;
 
             VkInstance mInstance;
             VkDebugUtilsMessengerEXT mDebugMessenger;
@@ -52,6 +67,9 @@ namespace PhoenixEngine {
 
 			VkQueue mGraphicsQueue;
 			VkQueue mPresentQueue;
+
+            SwapchainSupportDetails mSwapchainSupportDetails;
+            VkSwapchainKHR mSwapchain;
 
             const std::vector<const char *> mValidationLayers = { "VK_LAYER_KHRONOS_validation" };
 

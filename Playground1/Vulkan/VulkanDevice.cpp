@@ -45,12 +45,13 @@ namespace PhoenixEngine {
             }
         }
         
-        Device::Device(const Vulkan::Window& window) { 
+        Device::Device(Vulkan::Window& window) :  mWindow{window} { 
             createInstance();
             setupDebugMessenger();
-            createSurface(window);
+            createSurface();
             choosePhysicalDevice();
             createLogicalDevice();
+            // checkSwapchainSupport();
         }
 
         QueueFamilyIndices Device::findQueueFamilies(const VkPhysicalDevice& device) const
@@ -89,7 +90,29 @@ namespace PhoenixEngine {
             
             return indices;
         }
-        
+
+        SwapchainSupportDetails Device::checkSwapchainSupport(const VkPhysicalDevice& device)
+        {
+            SwapchainSupportDetails details;
+            
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, mSurface, &details.surfaceCapabilities);
+            
+            uint32_t formatCount;
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, nullptr);
+
+            details.formats.resize(formatCount);
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, details.formats.data());
+            spdlog::info("{} formats are supported by this surface",details.formats.size());
+
+            uint32_t presentModeCount;
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, nullptr);
+
+            details.presentModes.resize(presentModeCount);
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, details.presentModes.data());
+            spdlog::info("{} present modes are supported by this surface",details.presentModes.size());
+
+            return details;
+        }
 
         bool Device::checkExtensionSupport (const VkPhysicalDevice& device) const {
             uint32_t extensionCount;
@@ -116,7 +139,11 @@ namespace PhoenixEngine {
         bool Device::isDeviceSuitable(const VkPhysicalDevice& device) {
             QueueFamilyIndices indices = findQueueFamilies(device);
 
-            return indices.isComplete() && checkExtensionSupport(device);
+            SwapchainSupportDetails swapchainDetails = checkSwapchainSupport(device);
+
+            bool swapchainSuitable = !swapchainDetails.formats.empty() && !swapchainDetails.presentModes.empty();
+
+            return indices.isComplete() && checkExtensionSupport(device) && swapchainSuitable;
         }
         
         void Device::choosePhysicalDevice()
@@ -179,8 +206,8 @@ namespace PhoenixEngine {
         }
             
         
-        void Device::createSurface (const Vulkan::Window& window) {
-            window.createSurface(mInstance, mSurface);
+        void Device::createSurface () {
+            mWindow.createSurface(mInstance, mSurface);
         }
 
         void Device::createLogicalDevice()
@@ -268,6 +295,86 @@ namespace PhoenixEngine {
             if (vkCreateInstance(&createInfo, nullptr, &mInstance) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create instance!");
             }
+        }
+
+        void Device::createSwapchain()
+        {
+            SwapchainSupportDetails swapchainSupportDetails = checkSwapchainSupport(mPhysicalDevice);
+
+            VkSurfaceFormatKHR chosenFormat = chooseSwapchainFormat(swapchainSupportDetails.formats);
+            VkPresentModeKHR chosenPresentMode = chooseSwapchainPresentMode(swapchainSupportDetails.presentModes);
+
+            QueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice);
+            uint32_t indicesList[] = {indices.graphicsFamily, indices.presentFamily};
+
+            uint32_t imageCount = swapchainSupportDetails.surfaceCapabilities.minImageCount + 1;
+
+            if (swapchainSupportDetails.surfaceCapabilities.maxImageCount > 0 && imageCount > swapchainSupportDetails.surfaceCapabilities.maxImageCount)
+            {
+                imageCount = swapchainSupportDetails.surfaceCapabilities.maxImageCount;
+            }
+
+            VkSwapchainCreateInfoKHR createInfo = {};
+            createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+            createInfo.imageFormat = chosenFormat.format;
+            createInfo.imageColorSpace = chosenFormat.colorSpace;
+            createInfo.presentMode = chosenPresentMode;
+            createInfo.imageArrayLayers = 1;
+            createInfo.imageExtent = mWindow.getSwapchainExtent(swapchainSupportDetails.surfaceCapabilities);
+            createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+            createInfo.minImageCount = imageCount;
+            createInfo.surface = mSurface;
+
+            if (indices.graphicsFamily != indices.presentFamily)
+            {
+                createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+                createInfo.queueFamilyIndexCount = 2;
+                createInfo.pQueueFamilyIndices = indicesList;
+            }
+            else
+            {
+                createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+                createInfo.queueFamilyIndexCount = 0;
+                createInfo.pQueueFamilyIndices = nullptr;
+            }
+
+            createInfo.preTransform = swapchainSupportDetails.surfaceCapabilities.currentTransform;
+            createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+            createInfo.clipped = VK_TRUE;
+
+            if (vkCreateSwapchainKHR(mDevice, &createInfo, nullptr, &mSwapchain) != VK_SUCCESS)
+            {
+                throw std::runtime_error("Failed to create swapchain!");
+            }
+
+            spdlog::warn("Look at the difference between the swapchain buffers and the frame buffers");
+        }
+
+        const VkSurfaceFormatKHR& Device::chooseSwapchainFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) const
+        {
+            for (auto &format : availableFormats)
+            {
+                if (format.format == VK_FORMAT_B8G8R8A8_SRGB &&  format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+                {
+                    return format;
+                }
+            }
+
+            return availableFormats[0];
+        }
+
+        const VkPresentModeKHR Device::chooseSwapchainPresentMode(
+            const std::vector<VkPresentModeKHR>& availablePresentModes) const
+        {
+            for (auto &presentMode : availablePresentModes)
+            {
+                if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+                {
+                    return presentMode;
+                }
+            }
+
+            return VK_PRESENT_MODE_FIFO_KHR;
         }
 
         void Device::setupDebugMessenger() {
@@ -359,6 +466,7 @@ namespace PhoenixEngine {
                 DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr);
             }
 
+            vkDestroySwapchainKHR(mDevice, mSwapchain, nullptr);
             vkDestroyDevice(mDevice, nullptr);
             vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
             vkDestroyInstance(mInstance, nullptr);

@@ -10,7 +10,9 @@ namespace PhoenixEngine {
             ~Window() {};
             
             void createSurface(VkInstance& instance, VkSurfaceKHR& surface) const;
-            protected:
+            VkExtent2D getSwapchainExtent(VkSurfaceCapabilitiesKHR& capabilities);
+
+        protected:
             void setupHandle() override {};
         };
     }
