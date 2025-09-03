@@ -52,6 +52,8 @@ namespace PhoenixEngine {
             choosePhysicalDevice();
             createLogicalDevice();
             // checkSwapchainSupport();
+            createSwapchain();
+            createSwapchainImageViews();
         }
 
         QueueFamilyIndices Device::findQueueFamilies(const VkPhysicalDevice& device) const
@@ -302,6 +304,7 @@ namespace PhoenixEngine {
             SwapchainSupportDetails swapchainSupportDetails = checkSwapchainSupport(mPhysicalDevice);
 
             VkSurfaceFormatKHR chosenFormat = chooseSwapchainFormat(swapchainSupportDetails.formats);
+			mSwapchainImageFormat = chosenFormat.format;
             VkPresentModeKHR chosenPresentMode = chooseSwapchainPresentMode(swapchainSupportDetails.presentModes);
 
             QueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice);
@@ -356,6 +359,7 @@ namespace PhoenixEngine {
             {
                 if (format.format == VK_FORMAT_B8G8R8A8_SRGB &&  format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
                 {
+
                     return format;
                 }
             }
@@ -375,6 +379,13 @@ namespace PhoenixEngine {
             }
 
             return VK_PRESENT_MODE_FIFO_KHR;
+        }
+
+        void Device::createSwapchainImageViews() {
+			uint32_t imageCount;
+			vkGetSwapchainImagesKHR(mDevice, mSwapchain, &imageCount, nullptr);
+			mSwapchainImages.resize(imageCount);
+            vkGetSwapchainImagesKHR(mDevice, mSwapchain, &imageCount, mSwapchainImages.data());
         }
 
         void Device::setupDebugMessenger() {

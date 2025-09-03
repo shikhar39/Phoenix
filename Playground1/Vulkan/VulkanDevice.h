@@ -47,6 +47,7 @@ namespace PhoenixEngine {
             void setupDebugMessenger();
 			void createSurface();
             void createLogicalDevice();
+            void createSwapchainImageViews();
 
             
             QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice&) const;
@@ -70,6 +71,9 @@ namespace PhoenixEngine {
 
             SwapchainSupportDetails mSwapchainSupportDetails;
             VkSwapchainKHR mSwapchain;
+			VkFormat mSwapchainImageFormat;
+
+			std::vector<VkImage> mSwapchainImages;
 
             const std::vector<const char *> mValidationLayers = { "VK_LAYER_KHRONOS_validation" };
 
