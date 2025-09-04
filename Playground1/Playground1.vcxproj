@@ -99,6 +99,7 @@
     <ClCompile Include="DX12\DXContext.cpp" />
     <ClCompile Include="DX12\DXWindow.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Vulkan\Swapchain.cpp" />
     <ClCompile Include="Vulkan\VulkanDevice.cpp" />
     <ClCompile Include="Vulkan\VulkanWindow.cpp" />
     <ClCompile Include="Window.cpp" />
@@ -115,12 +116,16 @@
     <ClInclude Include="DX12\DXWindow.h" />
     <ClInclude Include="EngineChoice.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Vulkan\Swapchain.h" />
     <ClInclude Include="Vulkan\VulkanDevice.h" />
     <ClInclude Include="Vulkan\VulkanWindow.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Shaders\compile.bat" />
+    <Content Include="Shaders\shader.frag" />
+    <Content Include="Shaders\shader.vert" />
     <Content Include="Vulkan\settings.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <spdlog/fmt/ranges.h>
+#include <fstream>
 
 namespace PhoenixEngine {
     namespace Vulkan {
@@ -51,9 +52,9 @@ namespace PhoenixEngine {
             createSurface();
             choosePhysicalDevice();
             createLogicalDevice();
-            // checkSwapchainSupport();
             createSwapchain();
             createSwapchainImageViews();
+            createGraphicsPipeline();
         }
 
         QueueFamilyIndices Device::findQueueFamilies(const VkPhysicalDevice& device) const
@@ -304,8 +305,10 @@ namespace PhoenixEngine {
             SwapchainSupportDetails swapchainSupportDetails = checkSwapchainSupport(mPhysicalDevice);
 
             VkSurfaceFormatKHR chosenFormat = chooseSwapchainFormat(swapchainSupportDetails.formats);
-			mSwapchainImageFormat = chosenFormat.format;
             VkPresentModeKHR chosenPresentMode = chooseSwapchainPresentMode(swapchainSupportDetails.presentModes);
+
+            mSwapchainImageFormat = chosenFormat.format;
+            mSwapchainExtent = mWindow.getSwapchainExtent(swapchainSupportDetails.surfaceCapabilities);
 
             QueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice);
             uint32_t indicesList[] = {indices.graphicsFamily, indices.presentFamily};
@@ -323,7 +326,7 @@ namespace PhoenixEngine {
             createInfo.imageColorSpace = chosenFormat.colorSpace;
             createInfo.presentMode = chosenPresentMode;
             createInfo.imageArrayLayers = 1;
-            createInfo.imageExtent = mWindow.getSwapchainExtent(swapchainSupportDetails.surfaceCapabilities);
+            createInfo.imageExtent = mSwapchainExtent;
             createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
             createInfo.minImageCount = imageCount;
             createInfo.surface = mSurface;
@@ -351,6 +354,12 @@ namespace PhoenixEngine {
             }
 
             spdlog::warn("Look at the difference between the swapchain buffers and the frame buffers");
+
+            uint32_t swapchainImageCount;
+            vkGetSwapchainImagesKHR(mDevice, mSwapchain, &swapchainImageCount, nullptr);
+            mSwapchainImages.resize(swapchainImageCount);
+            vkGetSwapchainImagesKHR(mDevice, mSwapchain, &swapchainImageCount, mSwapchainImages.data());
+
         }
 
         const VkSurfaceFormatKHR& Device::chooseSwapchainFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) const
@@ -382,10 +391,44 @@ namespace PhoenixEngine {
         }
 
         void Device::createSwapchainImageViews() {
-			uint32_t imageCount;
-			vkGetSwapchainImagesKHR(mDevice, mSwapchain, &imageCount, nullptr);
-			mSwapchainImages.resize(imageCount);
-            vkGetSwapchainImagesKHR(mDevice, mSwapchain, &imageCount, mSwapchainImages.data());
+            spdlog::info("Readying image view buffer");
+            mSwapchainImageViews.resize(mSwapchainImages.size());
+
+            spdlog::info("Creating swapchain image views");
+            spdlog::info("Total images: {}", mSwapchainImages.size());
+            spdlog::info("Total images views: {}", mSwapchainImageViews.size());
+
+            for (int i = 0; i < mSwapchainImages.size(); i++)
+			{
+                VkImageViewCreateInfo imageViewCreateInfo = {};
+			    imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			    imageViewCreateInfo.image = mSwapchainImages[i];
+			    imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			    imageViewCreateInfo.format = mSwapchainImageFormat;
+
+			    imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+                imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+                imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+                imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+			    imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			    imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+                imageViewCreateInfo.subresourceRange.levelCount = 1;
+			    imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+			    imageViewCreateInfo.subresourceRange.layerCount = 1;
+			    
+                vkCreateImageView(mDevice, &imageViewCreateInfo, nullptr, &mSwapchainImageViews[i]);
+			}
+            
+        }
+
+        void Device::createGraphicsPipeline()
+        {
+            auto vertShaderFile = readFile("./Shaders/vert.spv");
+            auto fragShaderFile = readFile("./Shaders/frag.spv");
+
+            spdlog::info("Reading vertex shader file: {} bytes", vertShaderFile.size());
+            spdlog::info("Reading fragment shader file: {} bytes", fragShaderFile.size());
         }
 
         void Device::setupDebugMessenger() {
@@ -471,12 +514,36 @@ namespace PhoenixEngine {
             createInfo.pUserData = nullptr;  // Optional
         }
 
-        
+        std::vector<char> Device::readFile(const std::string& path)
+        {
+            std::ifstream file(path, std::ios::ate | std::ios::binary);
+
+            if (!file.is_open()) {
+                throw std::runtime_error("failed to open file!");
+            }
+
+            size_t fileSize = (size_t) file.tellg();
+            std::vector<char> buffer(fileSize);
+
+            file.seekg(0);
+            file.read(buffer.data(), fileSize);
+
+            return buffer;
+        }
+
+
         Device::~Device() {
+            spdlog::warn("Figure out what resources are destroyed on their own and what resources need to be destroyed manually.");
+
             if (enableValidationLayers) {
                 DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr);
             }
 
+            for (auto imageView : mSwapchainImageViews)
+            {
+                vkDestroyImageView(mDevice, imageView, nullptr);
+            }
+            
             vkDestroySwapchainKHR(mDevice, mSwapchain, nullptr);
             vkDestroyDevice(mDevice, nullptr);
             vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
