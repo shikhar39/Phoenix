@@ -60,6 +60,7 @@ namespace PhoenixEngine {
             static void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &createInfo);
 
             static std::vector<char> readFile(const std::string& path);
+			VkShaderModule createShaderModule(const std::vector<char>& code) const ;
             
             Window& mWindow;
 
@@ -80,6 +81,7 @@ namespace PhoenixEngine {
 			std::vector<VkImage> mSwapchainImages;
             std::vector<VkImageView> mSwapchainImageViews;
 
+			VkPipelineLayout mPipelineLayout;
             const std::vector<const char *> mValidationLayers = { "VK_LAYER_KHRONOS_validation" };
 
             const std::vector<const char*> mRequiredDeviceExtensions = { 

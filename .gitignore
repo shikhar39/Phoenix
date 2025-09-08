@@ -405,3 +405,6 @@ EngineChoice.h
 # Ext
 ext/vulkan
 ext/spdlog
+
+# Compiled shader files
+*.spv
