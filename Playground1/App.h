@@ -22,6 +22,7 @@ namespace PhoenixEngine {
         App& operator=(const App&) = delete;
 
         void run();
+		void drawFrame();
         private:		
 
 #ifdef _VK
