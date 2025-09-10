@@ -49,8 +49,9 @@ namespace PhoenixEngine {
             void createLogicalDevice();
             void createSwapchainImageViews();
             void createGraphicsPipeline();
+            void createRenderPass();
 
-            
+
             QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice&) const;
             SwapchainSupportDetails checkSwapchainSupport(const VkPhysicalDevice&);
             bool isDeviceSuitable(const VkPhysicalDevice&);
@@ -81,7 +82,10 @@ namespace PhoenixEngine {
 			std::vector<VkImage> mSwapchainImages;
             std::vector<VkImageView> mSwapchainImageViews;
 
+            VkRenderPass mRenderPass;
 			VkPipelineLayout mPipelineLayout;
+
+            
             const std::vector<const char *> mValidationLayers = { "VK_LAYER_KHRONOS_validation" };
 
             const std::vector<const char*> mRequiredDeviceExtensions = { 
