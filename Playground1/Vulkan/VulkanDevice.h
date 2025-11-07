@@ -35,7 +35,15 @@ namespace PhoenixEngine {
             public:
              Device(Vulkan::Window &window);
             ~Device();
-
+        public:
+			const VkDevice* get() const { return &mDevice; }
+			const VkFence* getInFlightFence() const { return &mInFlightFence; }
+			const VkSwapchainKHR* getSwapchain() const { return &mSwapchain; }
+			const VkSemaphore* getImageAvailableSemaphore() const { return &mImageAvailableSemaphore; }
+			const VkSemaphore* getRenderFinishedSemaphore() const { return &mRenderFinishedSemaphore; }
+			VkCommandBuffer& getCommandBuffer() { return mCommandBuffer; }
+            VkQueue getGraphicsQueue() const { return mGraphicsQueue; }
+			void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) const;
         private:
             void choosePhysicalDevice();
             void createInstance();
@@ -53,7 +61,6 @@ namespace PhoenixEngine {
 			void createFrameBuffers();
 			void createCommandPool();
 			void createCommandBuffer();
-			void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) const;
 
             QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice&) const;
             SwapchainSupportDetails checkSwapchainSupport(const VkPhysicalDevice&);
@@ -66,6 +73,9 @@ namespace PhoenixEngine {
             static std::vector<char> readFile(const std::string& path);
 			VkShaderModule createShaderModule(const std::vector<char>& code) const ;
             
+            void createSyncObjects();
+
+
             Window& mWindow;
 
             VkInstance mInstance;
@@ -93,6 +103,9 @@ namespace PhoenixEngine {
 			VkCommandPool mCommandPool;
 			VkCommandBuffer mCommandBuffer;
 
+            VkSemaphore mImageAvailableSemaphore;
+            VkSemaphore mRenderFinishedSemaphore;
+            VkFence mInFlightFence;
             const std::vector<const char *> mValidationLayers = { "VK_LAYER_KHRONOS_validation" };
 
             const std::vector<const char*> mRequiredDeviceExtensions = { 

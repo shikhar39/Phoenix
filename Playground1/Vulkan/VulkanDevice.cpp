@@ -59,6 +59,7 @@ namespace PhoenixEngine {
             createFrameBuffers();
 			createCommandPool();
             createCommandBuffer();
+			createSyncObjects();
         }
 
         QueueFamilyIndices Device::findQueueFamilies(const VkPhysicalDevice& device) const
@@ -821,6 +822,20 @@ namespace PhoenixEngine {
             return shaderModule;
 		}
 
+        void Device::createSyncObjects() {
+            VkSemaphoreCreateInfo semaphoreCreateInfo;
+            semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+			VkFenceCreateInfo fenceCreateInfo;
+            fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+			fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+            
+            if (vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mImageAvailableSemaphore) != VK_SUCCESS || vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mRenderFinishedSemaphore) || vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &mInFlightFence)) {
+                throw std::runtime_error("failed to create Semaphore");
+            }
+			spdlog::info("Semaphores created");
+			spdlog::info("Fence created");
+        }
+
         Device::~Device() {
 
 
@@ -829,7 +844,9 @@ namespace PhoenixEngine {
             if (enableValidationLayers) {
                 DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr);
             }
-
+			vkDestroySemaphore(mDevice, mRenderFinishedSemaphore, nullptr);
+            vkDestroySemaphore(mDevice, mImageAvailableSemaphore, nullptr);
+			vkDestroyFence(mDevice, mInFlightFence, nullptr);
 			vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
             for (auto framebuffer : mSwapchainFramebuffers) {
                 vkDestroyFramebuffer(mDevice, framebuffer, nullptr);
