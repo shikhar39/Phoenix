@@ -15,6 +15,8 @@ namespace PhoenixEngine {
             glfwPollEvents();
             drawFrame();
         }
+
+    	vkDeviceWaitIdle(*device.get());
     }
 
     void App::drawFrame()
@@ -47,7 +49,18 @@ namespace PhoenixEngine {
 		if (vkQueueSubmit(device.getGraphicsQueue(), 1, &submitInfo, *device.getInFlightFence()) != VK_SUCCESS) {
 			throw std::runtime_error("failed to submit draw command buffer!");
 		}
+
+    	VkPresentInfoKHR presentInfo{};
+    	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    	presentInfo.waitSemaphoreCount = 1;
+    	presentInfo.pWaitSemaphores = signalSemaphores;
+
+    	VkSwapchainKHR swapChains[] = {*device.getSwapchain()};
+    	presentInfo.swapchainCount = 1;
+    	presentInfo.pSwapchains = swapChains;
+    	presentInfo.pImageIndices = &imageIndex;
+    	presentInfo.pResults = nullptr;
+
+    	vkQueuePresentKHR(device.getPresentQueue(),  &presentInfo);
     }
-
-
 }

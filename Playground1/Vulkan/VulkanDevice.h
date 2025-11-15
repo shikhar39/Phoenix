@@ -44,6 +44,8 @@ namespace PhoenixEngine {
 			VkCommandBuffer& getCommandBuffer() { return mCommandBuffer; }
             VkQueue getGraphicsQueue() const { return mGraphicsQueue; }
 			void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) const;
+            VkQueue getPresentQueue() const { return mPresentQueue; }
+
         private:
             void choosePhysicalDevice();
             void createInstance();
