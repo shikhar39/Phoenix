@@ -10,7 +10,7 @@ namespace PhoenixEngine {
     }
     
     void App::run() {
-        spdlog::info("Starting Phoenix Engine app");
+    	spdlog::info("Starting Phoenix Engine app");
         while (!window.shouldClose()) {
             glfwPollEvents();
             drawFrame();
@@ -22,31 +22,40 @@ namespace PhoenixEngine {
     void App::drawFrame()
     {
         // vk wait for fence 
-		vkWaitForFences(*device.get(), 1, device.getInFlightFence(), VK_TRUE, UINT64_MAX);
+		vkWaitForFences(*device.get(), 1, device.getInFlightFence(currentFrameIndex), VK_TRUE, UINT64_MAX);
 		
 		// reset fence
-		vkResetFences(*device.get(), 1, device.getInFlightFence());
+		vkResetFences(*device.get(), 1, device.getInFlightFence(currentFrameIndex));
         
         uint32_t imageIndex;
-		vkAcquireNextImageKHR(*device.get(), *device.getSwapchain(), UINT64_MAX , *device.getImageAvailableSemaphore(),nullptr,  &imageIndex);
 
-		vkResetCommandBuffer(device.getCommandBuffer(), 0);
-		device.recordCommandBuffer(device.getCommandBuffer(), imageIndex);
+    	VkResult result = vkAcquireNextImageKHR(*device.get(), *device.getSwapchain(), UINT64_MAX , *device.getImageAvailableSemaphore(currentFrameIndex),nullptr,  &imageIndex);
+
+    	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    		spdlog::info("recreating swapchain!");
+    		device.recreateSwapchain();
+    		return;
+    	} else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    		throw std::runtime_error("failed to acquire swap chain image!");
+    	}
+
+    	vkResetCommandBuffer(device.getCommandBuffer(currentFrameIndex), 0);
+		device.recordCommandBuffer(device.getCommandBuffer(currentFrameIndex), imageIndex);
 
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		VkSemaphore waitSemaphores[] = { *device.getImageAvailableSemaphore() };
+		VkSemaphore waitSemaphores[] = { *device.getImageAvailableSemaphore(currentFrameIndex) };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = waitSemaphores;
 		submitInfo.pWaitDstStageMask = waitStages;
 		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &device.getCommandBuffer();
-		VkSemaphore signalSemaphores[] = { *device.getRenderFinishedSemaphore() };
+		submitInfo.pCommandBuffers = &device.getCommandBuffer(currentFrameIndex);
+		VkSemaphore signalSemaphores[] = { *device.getRenderFinishedSemaphore(currentFrameIndex) };
 
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
-		if (vkQueueSubmit(device.getGraphicsQueue(), 1, &submitInfo, *device.getInFlightFence()) != VK_SUCCESS) {
+		if (vkQueueSubmit(device.getGraphicsQueue(), 1, &submitInfo, *device.getInFlightFence(currentFrameIndex)) != VK_SUCCESS) {
 			throw std::runtime_error("failed to submit draw command buffer!");
 		}
 
@@ -62,5 +71,7 @@ namespace PhoenixEngine {
     	presentInfo.pResults = nullptr;
 
     	vkQueuePresentKHR(device.getPresentQueue(),  &presentInfo);
+
+    	currentFrameIndex = (currentFrameIndex + 1) % Vulkan::MAX_FRAMES_IN_FLIGHT;
     }
 }

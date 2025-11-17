@@ -58,7 +58,7 @@ namespace PhoenixEngine {
             createGraphicsPipeline();
             createFrameBuffers();
 			createCommandPool();
-            createCommandBuffer();
+            createCommandBuffers();
 			createSyncObjects();
         }
 
@@ -153,7 +153,21 @@ namespace PhoenixEngine {
 
             return indices.isComplete() && checkExtensionSupport(device) && swapchainSuitable;
         }
-        
+
+        void Device::recreateSwapchain()
+        {
+            mOldSwapchain = std::move(mSwapchain);
+            mSwapchain = std::make_unique<VkSwapchainKHR>(mOld );
+
+            vkDeviceWaitIdle(mDevice);
+
+            cleanupSwapchain();
+
+            createSwapchain();
+            createSwapchainImageViews();
+            createFrameBuffers();
+        }
+
         void Device::choosePhysicalDevice()
         {
             uint32_t deviceCount;
@@ -353,7 +367,9 @@ namespace PhoenixEngine {
             createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
             createInfo.clipped = VK_TRUE;
 
-            if (vkCreateSwapchainKHR(mDevice, &createInfo, nullptr, &mSwapchain) != VK_SUCCESS)
+            createInfo.oldSwapchain = mOldSwapchain == nullptr ?  VK_NULL_HANDLE : *mOldSwapchain;
+            
+            if (vkCreateSwapchainKHR(mDevice, &createInfo, nullptr, mSwapchain.get()) != VK_SUCCESS)
             {
                 throw std::runtime_error("Failed to create swapchain!");
             }
@@ -361,9 +377,9 @@ namespace PhoenixEngine {
             spdlog::warn("Look at the difference between the swapchain buffers and the frame buffers");
 
             uint32_t swapchainImageCount;
-            vkGetSwapchainImagesKHR(mDevice, mSwapchain, &swapchainImageCount, nullptr);
+            vkGetSwapchainImagesKHR(mDevice, *mSwapchain, &swapchainImageCount, nullptr);
             mSwapchainImages.resize(swapchainImageCount);
-            vkGetSwapchainImagesKHR(mDevice, mSwapchain, &swapchainImageCount, mSwapchainImages.data());
+            vkGetSwapchainImagesKHR(mDevice, *mSwapchain, &swapchainImageCount, mSwapchainImages.data());
 
         }
 
@@ -621,17 +637,19 @@ namespace PhoenixEngine {
             spdlog::info("Command pool created");
 		}
 
-        void Device::createCommandBuffer() {
+        void Device::createCommandBuffers() {
             VkCommandBufferAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
             allocInfo.commandPool = mCommandPool;
             allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandBufferCount = 1;
-            if (vkAllocateCommandBuffers(mDevice, &allocInfo, &mCommandBuffer) != VK_SUCCESS) {
+            allocInfo.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
+            if (vkAllocateCommandBuffers(mDevice, &allocInfo, mCommandBuffers.data()) != VK_SUCCESS) {
                 throw std::runtime_error("failed to allocate command buffers!");
             }
             spdlog::error("Command buffer allocated");
 		}
+
+       
 
         void Device::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) const {
 
@@ -834,48 +852,65 @@ namespace PhoenixEngine {
             return shaderModule;
 		}
 
+        void Device::cleanupSwapchain()
+        {
+            for (auto framebuffer : mSwapchainFramebuffers) {
+                vkDestroyFramebuffer(mDevice, framebuffer, nullptr);
+            }
+            
+            for (auto imageView : mSwapchainImageViews)
+            {
+                vkDestroyImageView(mDevice, imageView, nullptr);
+            }
+
+            vkDestroySwapchainKHR(mDevice, *mSwapchain, nullptr);
+        }
+        Device::~Device() {
+            spdlog::warn("Figure out what resources are destroyed on their own and what resources need to be destroyed manually.");
+
+            if (enableValidationLayers) {
+                DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr);
+            }
+            
+            for (int  i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+            {
+                vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[i], nullptr);
+                vkDestroySemaphore(mDevice, mImageAvailableSemaphores[i], nullptr);
+                vkDestroyFence(mDevice, mInFlightFences[i], nullptr);    
+            }
+            
+            vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
+
+            vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
+            vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
+            vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
+
+
+            cleanupSwapchain();
+
+            vkDestroyDevice(mDevice, nullptr);
+            vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
+            vkDestroyInstance(mInstance, nullptr);
+        }
+
         void Device::createSyncObjects() {
             VkSemaphoreCreateInfo semaphoreCreateInfo{};
             semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 			VkFenceCreateInfo fenceCreateInfo{};
             fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 			fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-            
-            if (vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mImageAvailableSemaphore) != VK_SUCCESS || vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mRenderFinishedSemaphore) != VK_SUCCESS || vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &mInFlightFence) != VK_SUCCESS) {
-                throw std::runtime_error("failed to create Semaphore");
-            }
-			spdlog::info("Semaphores created");
-			spdlog::info("Fence created");
-        }
 
-        Device::~Device() {
-
-
-            spdlog::warn("Figure out what resources are destroyed on their own and what resources need to be destroyed manually.");
-
-            if (enableValidationLayers) {
-                DestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, nullptr);
-            }
-			vkDestroySemaphore(mDevice, mRenderFinishedSemaphore, nullptr);
-            vkDestroySemaphore(mDevice, mImageAvailableSemaphore, nullptr);
-			vkDestroyFence(mDevice, mInFlightFence, nullptr);
-			vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
-            for (auto framebuffer : mSwapchainFramebuffers) {
-                vkDestroyFramebuffer(mDevice, framebuffer, nullptr);
-			}
-			vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
-            vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
-            vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
-            
-            for (auto imageView : mSwapchainImageViews)
+            for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
             {
-                vkDestroyImageView(mDevice, imageView, nullptr);
+                if (vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mImageAvailableSemaphores[i]) != VK_SUCCESS
+                    || vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mRenderFinishedSemaphores[i]) != VK_SUCCESS
+                    || vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &mInFlightFences[i]) != VK_SUCCESS) {
+                    throw std::runtime_error("failed to create Semaphore");
+                }    
             }
             
-            vkDestroySwapchainKHR(mDevice, mSwapchain, nullptr);
-            vkDestroyDevice(mDevice, nullptr);
-            vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
-            vkDestroyInstance(mInstance, nullptr);
+            spdlog::info("Semaphores created");
+			spdlog::info("Fence created");
         }
     }
 }

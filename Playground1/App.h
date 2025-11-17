@@ -14,6 +14,7 @@ namespace PhoenixEngine {
         static constexpr int WIDTH = 800; // Should we make width and height a property of the window rather than the app 
         static constexpr int HEIGHT = 600;
 
+        uint32_t currentFrameIndex = 0;
 
         App();
         ~App();
@@ -23,8 +24,8 @@ namespace PhoenixEngine {
 
         void run();
 		void drawFrame();
-        private:		
-
+        private:
+        
 #ifdef _VK
         Vulkan::Window window{WIDTH, HEIGHT, "Phoenix"};
         Vulkan::Device device{ window };
