@@ -408,3 +408,5 @@ ext/spdlog
 
 # Compiled shader files
 *.spv
+
+build
