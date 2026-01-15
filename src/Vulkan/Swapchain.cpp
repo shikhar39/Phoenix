@@ -7,7 +7,7 @@
 //     {
 //         Swapchain::Swapchain(Device& device) : mDevice{device}
 //         {
-//             
+//
 //             SwapchainSupportDetails swapchainSupportDetails = mDevice.checkSwapchainSupport(mPhysicalDevice);
 //
 //             VkSurfaceFormatKHR chosenFormat = chooseSwapchainFormat(swapchainSupportDetails.formats);
@@ -96,7 +96,7 @@
 //
 //         void Swapchain::createSwapchainImageViews() {
 //             mSwapchainImageViews.resize(mSwapchainImageViews.size());
-//             
+//
 // 			for (int i = 0; i < mSwapchainImages.size(); i++)
 // 			{
 //                 VkImageViewCreateInfo imageViewCreateInfo = {};
@@ -115,10 +115,10 @@
 //                 imageViewCreateInfo.subresourceRange.levelCount = 1;
 // 			    imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
 // 			    imageViewCreateInfo.subresourceRange.layerCount = 1;
-// 			    
+//
 //                 vkCreateImageView(mDevice, &imageViewCreateInfo, nullptr, &mSwapchainImageViews[i]);
 // 			}
-//             
+//
 //         }
 //     }
 // }

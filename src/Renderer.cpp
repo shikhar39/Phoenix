@@ -1,2 +1,3 @@
-#include "stdafx.h"
 #include "Renderer.h"
+
+#include "stdafx.h"

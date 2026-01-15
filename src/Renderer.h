@@ -2,9 +2,7 @@
 
 namespace PhoenixEngine {
 
-    class Renderer {
-        public:
-        
-    };    
-}
-
+class Renderer {
+   public:
+};
+}  // namespace PhoenixEngine

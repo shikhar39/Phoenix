@@ -23,7 +23,7 @@
 //             Swapchain(Device&);
 //         private:
 //             Device& mDevice;
-//             
+//
 //             VkSwapchainKHR mSwapchain;
 //             std::vector<VkImage> mSwapchainImages;
 //             std::vector<VkImageView> mSwapchainImageViews;

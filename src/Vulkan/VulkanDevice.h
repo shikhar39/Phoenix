@@ -14,196 +14,207 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 struct QueueFamilyIndices
 
 {
+	uint32_t graphicsFamily;
 
-  uint32_t graphicsFamily;
+	uint32_t presentFamily;
 
-  uint32_t presentFamily;
+	bool hasGraphicsFamily = false;
 
-  bool hasGraphicsFamily = false;
+	bool hasPresentFamily = false;
 
-  bool hasPresentFamily = false;
-
-  bool isComplete() { return hasGraphicsFamily && hasPresentFamily; }
+	bool isComplete() {
+		return hasGraphicsFamily && hasPresentFamily;
+	}
 };
 
 struct SwapchainSupportDetails
 
 {
+	VkSurfaceCapabilitiesKHR surfaceCapabilities;
 
-  VkSurfaceCapabilitiesKHR surfaceCapabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
 
-  std::vector<VkSurfaceFormatKHR> formats;
-
-  std::vector<VkPresentModeKHR> presentModes;
+	std::vector<VkPresentModeKHR> presentModes;
 };
 
 class Device {
-
 #ifdef NDEBUG
 
-  const bool enableValidationLayers = false;
+	const bool enableValidationLayers = false;
 
 #else
 
-  const bool enableValidationLayers = true;
+	const bool enableValidationLayers = true;
 
 #endif
 
-public:
-  Device(Vulkan::Window &window);
+   public:
+	Device(Vulkan::Window& window);
 
-  ~Device();
+	~Device();
 
-public:
-  const VkDevice *get() const { return &mDevice; }
+   public:
+	const VkDevice* get() const {
+		return &mDevice;
+	}
 
-  const VkFence &getInFlightFence(size_t frame) const {
-    return mInFlightFences[frame];
-  }
+	const VkFence& getInFlightFence(size_t frame) const {
+		return mInFlightFences[frame];
+	}
 
-  const VkSemaphore &getImageAvailableSemaphore(size_t frame) const {
-    return mImageAvailableSemaphores[frame];
-  }
+	const VkSemaphore& getImageAvailableSemaphore(size_t frame) const {
+		return mImageAvailableSemaphores[frame];
+	}
 
-  const VkSemaphore &getRenderFinishedSemaphore(size_t frame) const {
-    return mRenderFinishedSemaphores[frame];
-  }
+	const VkSemaphore& getRenderFinishedSemaphore(size_t frame) const {
+		return mRenderFinishedSemaphores[frame];
+	}
 
-  const VkSwapchainKHR *getSwapchain() const { return &mSwapchain; }
+	const VkSwapchainKHR* getSwapchain() const {
+		return &mSwapchain;
+	}
 
-  VkCommandBuffer &getCommandBuffer(size_t frame) {
-    return mCommandBuffers[frame];
-  }
+	VkCommandBuffer& getCommandBuffer(size_t frame) {
+		return mCommandBuffers[frame];
+	}
 
-  VkQueue getGraphicsQueue() const { return mGraphicsQueue; }
+	VkQueue getGraphicsQueue() const {
+		return mGraphicsQueue;
+	}
 
-  void recordCommandBuffer(VkCommandBuffer commandBuffer,
-                           uint32_t imageIndex) const;
+	void recordCommandBuffer(VkCommandBuffer commandBuffer,
+							 uint32_t imageIndex) const;
 
-  VkQueue getPresentQueue() const { return mPresentQueue; }
+	VkQueue getPresentQueue() const {
+		return mPresentQueue;
+	}
 
-  uint32_t getCurrentFrame() { return mCurrentFrame; }
-  void advanceFrame() {
-    mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-  }
+	uint32_t getCurrentFrame() {
+		return mCurrentFrame;
+	}
+	void advanceFrame() {
+		mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+	}
 
-  void recreateSwapchain();
+	void recreateSwapchain();
 
-private:
-  void choosePhysicalDevice();
+   private:
+	void choosePhysicalDevice();
 
-  void createInstance();
+	void createInstance();
 
-  void createSwapchain();
+	void createSwapchain();
 
-  const VkExtent2D setSwapchainExtent(VkSurfaceCapabilitiesKHR &capabilities);
+	const VkExtent2D setSwapchainExtent(VkSurfaceCapabilitiesKHR& capabilities);
 
-  const VkSurfaceFormatKHR &chooseSwapchainFormat(
-      const std::vector<VkSurfaceFormatKHR> &availableFormats) const;
+	const VkSurfaceFormatKHR& chooseSwapchainFormat(
+		const std::vector<VkSurfaceFormatKHR>& availableFormats) const;
 
-  const VkPresentModeKHR chooseSwapchainPresentMode(
+	const VkPresentModeKHR chooseSwapchainPresentMode(
 
-      const std::vector<VkPresentModeKHR> &availablePresentModes) const;
+		const std::vector<VkPresentModeKHR>& availablePresentModes) const;
 
-  void setupDebugMessenger();
+	void setupDebugMessenger();
 
-  void createSurface();
+	void createSurface();
 
-  void createLogicalDevice();
+	void createLogicalDevice();
 
-  void createImageViews();
+	void createImageViews();
 
-  void createRenderPass();
+	void createRenderPass();
 
-  void createGraphicsPipeline();
+	void createGraphicsPipeline();
 
-  void createFrameBuffers();
+	void createFrameBuffers();
 
-  void createCommandPool();
+	void createCommandPool();
 
-  void createCommandBuffers();
+	void createCommandBuffers();
 
-  void cleanupSwapchain();
+	void cleanupSwapchain();
 
-  QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice &) const;
+	void cleanupSwapchainResources();
 
-  SwapchainSupportDetails checkSwapchainSupport(const VkPhysicalDevice &);
+	QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice&) const;
 
-  bool isDeviceSuitable(const VkPhysicalDevice &);
+	SwapchainSupportDetails checkSwapchainSupport(const VkPhysicalDevice&);
 
-  bool checkExtensionSupport(const VkPhysicalDevice &device) const;
+	bool isDeviceSuitable(const VkPhysicalDevice&);
 
-  std::vector<const char *> getRequiredExtensions() const;
+	bool checkExtensionSupport(const VkPhysicalDevice& device) const;
 
-  bool checkValidationLayerSupport() const;
+	std::vector<const char*> getRequiredExtensions() const;
 
-  static void populateDebugMessengerCreateInfo(
-      VkDebugUtilsMessengerCreateInfoEXT &createInfo);
+	bool checkValidationLayerSupport() const;
 
-  static std::vector<char> readFile(const std::string &path);
+	static void populateDebugMessengerCreateInfo(
+		VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
-  VkShaderModule createShaderModule(const std::vector<char> &code) const;
+	static std::vector<char> readFile(const std::string& path);
 
-  void createSyncObjects();
+	VkShaderModule createShaderModule(const std::vector<char>& code) const;
 
-  Window &mWindow;
+	void createSyncObjects();
 
-  VkInstance mInstance;
+	Window& mWindow;
 
-  VkDebugUtilsMessengerEXT mDebugMessenger;
+	VkInstance mInstance;
 
-  VkSurfaceKHR mSurface;
+	VkDebugUtilsMessengerEXT mDebugMessenger;
 
-  VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;
+	VkSurfaceKHR mSurface;
 
-  VkDevice mDevice;
+	VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;
 
-  VkQueue mGraphicsQueue;
+	VkDevice mDevice;
 
-  VkQueue mPresentQueue;
+	VkQueue mGraphicsQueue;
 
-  SwapchainSupportDetails mSwapchainSupportDetails;
+	VkQueue mPresentQueue;
 
-  VkSwapchainKHR mSwapchain;
+	SwapchainSupportDetails mSwapchainSupportDetails;
 
-  VkFormat mSwapchainImageFormat;
+	VkSwapchainKHR mSwapchain;
 
-  VkExtent2D mSwapchainExtent;
+	VkFormat mSwapchainImageFormat;
 
-  std::vector<VkImage> mSwapchainImages;
+	VkExtent2D mSwapchainExtent;
 
-  std::vector<VkImageView> mSwapchainImageViews;
+	std::vector<VkImage> mSwapchainImages;
 
-  std::vector<VkFramebuffer> mSwapchainFramebuffers;
+	std::vector<VkImageView> mSwapchainImageViews;
 
-  VkRenderPass mRenderPass;
+	std::vector<VkFramebuffer> mSwapchainFramebuffers;
 
-  VkPipelineLayout mPipelineLayout;
+	VkRenderPass mRenderPass;
 
-  VkPipeline mGraphicsPipeline;
+	VkPipelineLayout mPipelineLayout;
 
-  VkCommandPool mCommandPool;
+	VkPipeline mGraphicsPipeline;
 
-  std::vector<VkCommandBuffer> mCommandBuffers;
+	VkCommandPool mCommandPool;
 
-  std::vector<VkSemaphore> mImageAvailableSemaphores;
+	std::vector<VkCommandBuffer> mCommandBuffers;
 
-  std::vector<VkSemaphore> mRenderFinishedSemaphores;
+	std::vector<VkSemaphore> mImageAvailableSemaphores;
 
-  std::vector<VkFence> mInFlightFences;
+	std::vector<VkSemaphore> mRenderFinishedSemaphores;
 
-  uint32_t mCurrentFrame = 0;
+	std::vector<VkFence> mInFlightFences;
 
-  const std::vector<const char *> mValidationLayers = {
-      "VK_LAYER_KHRONOS_validation"};
+	uint32_t mCurrentFrame = 0;
 
-  const std::vector<const char *> mRequiredDeviceExtensions = {
+	const std::vector<const char*> mValidationLayers = {
+		"VK_LAYER_KHRONOS_validation"};
 
-      VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	const std::vector<const char*> mRequiredDeviceExtensions = {
 
-  };
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+
+	};
 };
 
-} // namespace Vulkan
+}  // namespace Vulkan
 
-} // namespace PhoenixEngine
+}  // namespace PhoenixEngine
