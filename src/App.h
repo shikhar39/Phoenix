@@ -1,6 +1,5 @@
 #pragma once
 
-#include "EngineChoice.h"
 #include "Vulkan/VulkanDevice.h"
 #include "Vulkan/VulkanWindow.h"
 
