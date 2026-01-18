@@ -412,3 +412,5 @@ ext/spdlog
 build
 
 *.sln
+.clang-format
+/.zed
