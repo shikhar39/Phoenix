@@ -8,6 +8,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <vector>
+#include<filesystem>
 
 #include "stdafx.h"
 #include "vulkan/vulkan_core.h"
@@ -450,23 +451,22 @@ void Device::createImageViews() {
 
 void Device::createGraphicsPipeline() {
 #pragma region READ_SHADER_FILES
-	// std::filesystem::path dirPath("../"); // your directory
-	//
-	// if (std::filesystem::exists(dirPath) &&
-	//     std::filesystem::is_directory(dirPath)) {
-	//   std::cout << "Files in " << dirPath << ":\n";
-	//
-	//   for (const auto &entry : std::filesystem::directory_iterator(dirPath)) {
-	//     if (entry.is_regular_file()) { // skip subdirectories
-	//       std::cout << "  " << entry.path().filename() << "\n";
-	//     }
-	//   }
-	// } else {
-	//   std::cout << dirPath << " does not exist or is not a directory.\n";
-	// }
+	std::filesystem::path dirPath("./"); // your directory
 
-	auto vertShaderFile = readFile("../Shaders/shader.vert.spv");
-	auto fragShaderFile = readFile("../Shaders/shader.frag.spv");
+	if (std::filesystem::exists(dirPath) &&
+	    std::filesystem::is_directory(dirPath)) {
+	  std::cout << "Files in " << dirPath << ":\n";
+
+	  for (const auto &entry : std::filesystem::directory_iterator(dirPath)) {
+	    if (entry.is_regular_file()) { // skip subdirectories
+	      std::cout << "  " << entry.path().filename() << "\n";
+	    }
+	  }
+	} else {
+	  std::cout << dirPath << " does not exist or is not a directory.\n";
+	}
+	auto vertShaderFile = readFile("./shaders/out/shader.vert.spv");
+	auto fragShaderFile = readFile("./shaders/out/shader.frag.spv");
 
 	spdlog::info("Reading vertex shader file: {} bytes", vertShaderFile.size());
 	spdlog::info("Reading fragment shader file: {} bytes", fragShaderFile.size());
