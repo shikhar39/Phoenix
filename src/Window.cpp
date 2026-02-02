@@ -1,10 +1,6 @@
-#include "Window.h"
+#include "stdafx.hpp"
 
-#include <GLFW/glfw3.h>
-
-#include <memory>
-
-#include "stdafx.h"
+#include "Window.hpp"
 
 namespace PhoenixEngine {
 Window::Window(int inWidth, int inHeight, std::string inName)
@@ -30,6 +26,8 @@ void Window::framebufferSizeCallback(GLFWwindow* inWindow, int width,
 									 int height) {
 	auto handle = reinterpret_cast<Window*>(glfwGetWindowUserPointer(inWindow));
 	handle->framebufferResized = true;
+	handle->width = width;
+	handle->height = height;
 	spdlog::warn("window resized!");
 }
 Window::~Window() {

@@ -1,8 +1,8 @@
-#include "VulkanWindow.h"
+#include "stdafx.hpp"
+
+#include "VulkanWindow.hpp"
 
 #include <spdlog/spdlog.h>
-
-#include "stdafx.h"
 
 namespace PhoenixEngine {
 namespace Vulkan {
@@ -15,32 +15,6 @@ void Window::createSurface(VkInstance& instance, VkSurfaceKHR& surface) const {
 		VK_SUCCESS) {
 		throw std::runtime_error("Failed to create window surface!");
 	}
-}
-
-VkExtent2D Window::getSwapchainExtent(VkSurfaceCapabilitiesKHR& capabilities) {
-	if (capabilities.currentExtent.width != UINT32_MAX) {
-		return capabilities.currentExtent;
-	}
-
-	spdlog::info("Window manager requested manual setting of swapchain extent");
-
-	int width;
-	int height;
-
-	glfwGetFramebufferSize(window, &width, &height);
-
-	VkExtent2D newExtent = {static_cast<uint32_t>(width),
-							static_cast<uint32_t>(height)};
-
-	newExtent.width =
-		std::clamp(newExtent.width, capabilities.minImageExtent.width,
-				   capabilities.maxImageExtent.width);
-	newExtent.height =
-		std::clamp(newExtent.height, capabilities.minImageExtent.height,
-				   capabilities.maxImageExtent.height);
-
-	spdlog::info("Extent: {}, {}", newExtent.width, newExtent.height);
-	return newExtent;
 }
 }  // namespace Vulkan
 }  // namespace PhoenixEngine

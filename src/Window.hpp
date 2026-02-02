@@ -1,5 +1,6 @@
 #pragma once
 
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -7,7 +8,7 @@
 
 namespace PhoenixEngine {
 class Window {
-   public:
+public:
 	Window(int inWidth, int inHeight, std::string inName);
 	virtual ~Window();
 
@@ -29,20 +30,19 @@ class Window {
 		return window;
 	}
 
-   private:
-	virtual void init();
-
-	int width;
-	int height;
-
-	std::string name;
+private:
+   virtual void init();
+   std::string name;
 
    protected:
-	GLFWwindow* window;
-	bool framebufferResized = false;
-	virtual void
-	setupHandle() = 0;	// Putting this in to try making the class abstract.
-	static void framebufferSizeCallback(GLFWwindow* window, int width,
+   int width;
+   int height;
+
+   GLFWwindow* window;
+   bool framebufferResized = false;
+   virtual void
+   setupHandle() = 0;	// Putting this in to try making the class abstract.
+   static void framebufferSizeCallback(GLFWwindow* window, int width,
 										int height);
 };
 }  // namespace PhoenixEngine

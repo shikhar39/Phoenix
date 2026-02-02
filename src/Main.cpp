@@ -1,7 +1,8 @@
-#include <spdlog/common.h>
+#include "stdafx.hpp"
 
-#include "App.h"
-#include "stdafx.h"
+#include "App.hpp"
+
+#include <spdlog/common.h>
 
 int main() {
 	spdlog::set_level(spdlog::level::info);

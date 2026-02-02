@@ -1,14 +1,12 @@
 #pragma once
 
-#include <cstddef>
+#include "VulkanWindow.hpp"
+
 #include <cstdint>
 #include <vector>
 
-#include "VulkanWindow.h"
-
 namespace PhoenixEngine {
 namespace Vulkan {
-
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 struct QueueFamilyIndices
@@ -48,35 +46,18 @@ class Device {
 
 #endif
 
-   public:
-	Device(Vulkan::Window& window);
-
+public:
+	Device(Window& window);
 	~Device();
 
-   public:
-	const VkDevice* get() const {
-		return &mDevice;
-	}
+	const VkDevice& get() const { return mDevice; }
 
-	const VkFence& getInFlightFence(size_t frame) const {
-		return mInFlightFences[frame];
-	}
+	const VkSurfaceKHR& getSurface() const { return mSurface; }
 
-	const VkSemaphore& getImageAvailableSemaphore(size_t frame) const {
-		return mImageAvailableSemaphores[frame];
-	}
+	const SwapchainSupportDetails getSwapchainSupport() { return checkSwapchainSupport(mPhysicalDevice); }
+	const QueueFamilyIndices getQueueFamilies() { return findQueueFamilies(mPhysicalDevice); }
 
-	const VkSemaphore& getRenderFinishedSemaphore(size_t frame) const {
-		return mRenderFinishedSemaphores[frame];
-	}
-
-	const VkSwapchainKHR* getSwapchain() const {
-		return &mSwapchain;
-	}
-
-	VkCommandBuffer& getCommandBuffer(size_t frame) {
-		return mCommandBuffers[frame];
-	}
+	const VkCommandPool& getCommandPool() { return mCommandPool; }
 
 	VkQueue getGraphicsQueue() const {
 		return mGraphicsQueue;
@@ -89,30 +70,9 @@ class Device {
 		return mPresentQueue;
 	}
 
-	uint32_t getCurrentFrame() {
-		return mCurrentFrame;
-	}
-	void advanceFrame() {
-		mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-	}
-
-	void recreateSwapchain();
-
-   private:
+private:
 	void choosePhysicalDevice();
-
 	void createInstance();
-
-	void createSwapchain();
-
-	const VkExtent2D setSwapchainExtent(VkSurfaceCapabilitiesKHR& capabilities);
-
-	const VkSurfaceFormatKHR& chooseSwapchainFormat(
-		const std::vector<VkSurfaceFormatKHR>& availableFormats) const;
-
-	const VkPresentModeKHR chooseSwapchainPresentMode(
-
-		const std::vector<VkPresentModeKHR>& availablePresentModes) const;
 
 	void setupDebugMessenger();
 
@@ -120,21 +80,7 @@ class Device {
 
 	void createLogicalDevice();
 
-	void createImageViews();
-
-	void createRenderPass();
-
-	void createGraphicsPipeline();
-
-	void createFrameBuffers();
-
 	void createCommandPool();
-
-	void createCommandBuffers();
-
-	void cleanupSwapchain();
-
-	void cleanupSwapchainResources();
 
 	QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice&) const;
 
@@ -151,11 +97,6 @@ class Device {
 	static void populateDebugMessengerCreateInfo(
 		VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
-	static std::vector<char> readFile(const std::string& path);
-
-	VkShaderModule createShaderModule(const std::vector<char>& code) const;
-
-	void createSyncObjects();
 
 	Window& mWindow;
 
@@ -175,35 +116,7 @@ class Device {
 
 	SwapchainSupportDetails mSwapchainSupportDetails;
 
-	VkSwapchainKHR mSwapchain;
-
-	VkFormat mSwapchainImageFormat;
-
-	VkExtent2D mSwapchainExtent;
-
-	std::vector<VkImage> mSwapchainImages;
-
-	std::vector<VkImageView> mSwapchainImageViews;
-
-	std::vector<VkFramebuffer> mSwapchainFramebuffers;
-
-	VkRenderPass mRenderPass;
-
-	VkPipelineLayout mPipelineLayout;
-
-	VkPipeline mGraphicsPipeline;
-
 	VkCommandPool mCommandPool;
-
-	std::vector<VkCommandBuffer> mCommandBuffers;
-
-	std::vector<VkSemaphore> mImageAvailableSemaphores;
-
-	std::vector<VkSemaphore> mRenderFinishedSemaphores;
-
-	std::vector<VkFence> mInFlightFences;
-
-	uint32_t mCurrentFrame = 0;
 
 	const std::vector<const char*> mValidationLayers = {
 		"VK_LAYER_KHRONOS_validation"};
@@ -214,7 +127,5 @@ class Device {
 
 	};
 };
-
 }  // namespace Vulkan
-
 }  // namespace PhoenixEngine

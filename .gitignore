@@ -414,3 +414,6 @@ build
 *.sln
 .clang-format
 /.zed
+
+Makefile
+compile_commands.json
