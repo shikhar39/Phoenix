@@ -1,6 +1,7 @@
 #include "VulkanRenderer.hpp"
 
 #include "Vulkan/VulkanDevice.hpp"
+#include "../Utils.hpp"
 
 #include <cstdint>
 #include <fstream>
@@ -127,6 +128,7 @@ void Renderer::recordCommandBuffer(VkCommandBuffer& commandBuffer,
 void Renderer::createGraphicsPipeline() {
 	VkExtent2D swapChainExtent = mSwapChain->getSwapChainExtent();
 #pragma region READ_SHADER_FILES
+	spdlog::info(Utils::getProjectRoot().string());
 	std::filesystem::path dirPath("./"); // your directory
 
 	if (std::filesystem::exists(dirPath) &&
@@ -141,8 +143,8 @@ void Renderer::createGraphicsPipeline() {
 	} else {
 	  std::cout << dirPath << " does not exist or is not a directory.\n";
 	}
-	auto vertShaderFile = readFile("./shaders/out/shader.vert.spv");
-	auto fragShaderFile = readFile("./shaders/out/shader.frag.spv");
+	auto vertShaderFile = readFile("shaders\\out\\shader.vert.spv");
+	auto fragShaderFile = readFile("shaders\\out\\shader.frag.spv");
 
 	spdlog::info("Reading vertex shader file: {} bytes", vertShaderFile.size());
 	spdlog::info("Reading fragment shader file: {} bytes", fragShaderFile.size());
@@ -306,8 +308,8 @@ void Renderer::createGraphicsPipeline() {
 	spdlog::info("Shader modules cleaned up");
 }
 
-std::vector<char> Renderer::readFile(const std::string& path) {
-	std::ifstream file(path, std::ios::ate | std::ios::binary);
+std::vector<char> Renderer::readFile(const std::filesystem::path& relative) {
+	std::ifstream file(Utils::assetPath(relative), std::ios::ate | std::ios::binary);
 
 	if (!file.is_open()) {
 		throw std::runtime_error("failed to open file!");

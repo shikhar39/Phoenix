@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <cstdint>
+#include <filesystem>
 
 namespace PhoenixEngine {
 namespace Vulkan {
@@ -37,7 +38,7 @@ private:
 
 	//temporary
 	void createGraphicsPipeline();
-	std::vector<char> readFile(const std::string& path);
+	std::vector<char> readFile(const std::filesystem::path& relative);
 
 	VkShaderModule createShaderModule(const std::vector<char>& code) const;
 	std::vector<VkCommandBuffer> mCommandBuffers;
