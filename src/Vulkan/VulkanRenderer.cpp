@@ -143,8 +143,8 @@ void Renderer::createGraphicsPipeline() {
 	} else {
 	  std::cout << dirPath << " does not exist or is not a directory.\n";
 	}
-	auto vertShaderFile = readFile("shaders\\out\\shader.vert.spv");
-	auto fragShaderFile = readFile("shaders\\out\\shader.frag.spv");
+	auto vertShaderFile = readFile("shaders/out/shader.vert.spv");
+	auto fragShaderFile = readFile("shaders/out/shader.frag.spv");
 
 	spdlog::info("Reading vertex shader file: {} bytes", vertShaderFile.size());
 	spdlog::info("Reading fragment shader file: {} bytes", fragShaderFile.size());
