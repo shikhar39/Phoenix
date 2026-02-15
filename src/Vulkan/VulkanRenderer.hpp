@@ -1,8 +1,11 @@
+#pragma once
+
 #include "stdafx.hpp"
 
 #include "VulkanDevice.hpp"
 #include "VulkanWindow.hpp"
 #include "SwapChain.hpp"
+#include "Model.hpp"
 
 #include <memory>
 #include <cstdint>
@@ -21,7 +24,8 @@ public:
 	void drawFrame();
 	VkCommandBuffer getCurrentCommandBuffer() const {
 		return mCommandBuffers[currentFrameIndex];
-  }
+	}
+	void loadModels();
 private:
 	void createCommandBuffers();
 	void freeCommandBuffers();
@@ -31,6 +35,8 @@ private:
 	Window& mWindow;
 	Device& mDevice;
 	std::unique_ptr<SwapChain> mSwapChain;
+
+	std::unique_ptr<Model> mModel;
 
 	//temporary
 	VkPipelineLayout mPipelineLayout;
@@ -46,6 +52,5 @@ private:
 	uint32_t mCurrentImageIndex;
 	uint32_t currentFrameIndex{0};
 };
-
 }
 }

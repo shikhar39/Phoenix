@@ -63,14 +63,15 @@ public:
 		return mGraphicsQueue;
 	}
 
-	void recordCommandBuffer(VkCommandBuffer commandBuffer,
-							 uint32_t imageIndex) const;
-
 	VkQueue getPresentQueue() const {
 		return mPresentQueue;
 	}
+	
+	void recordCommandBuffer(VkCommandBuffer commandBuffer,
+							 uint32_t imageIndex) const;
 
-private:
+	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& memory);
+   private:
 	void choosePhysicalDevice();
 	void createInstance();
 
@@ -88,6 +89,7 @@ private:
 
 	bool isDeviceSuitable(const VkPhysicalDevice&);
 
+
 	bool checkExtensionSupport(const VkPhysicalDevice& device) const;
 
 	std::vector<const char*> getRequiredExtensions() const;
@@ -96,6 +98,8 @@ private:
 
 	static void populateDebugMessengerCreateInfo(
 		VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 
 	Window& mWindow;
@@ -122,9 +126,7 @@ private:
 		"VK_LAYER_KHRONOS_validation"};
 
 	const std::vector<const char*> mRequiredDeviceExtensions = {
-
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
-
 	};
 };
 }  // namespace Vulkan

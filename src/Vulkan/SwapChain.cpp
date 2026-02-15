@@ -338,14 +338,11 @@ const VkResult SwapChain::submitCommandBuffer(const VkCommandBuffer* buffers, co
 
 	VkResult result = vkQueuePresentKHR(mDevice.getPresentQueue(), &presentInfo);
 
-
 	spdlog::warn("I drew");
 
 	mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
 	return result;
 }
-
-
 } // namespace Vulkan
 } // namespace PhoenixEngine

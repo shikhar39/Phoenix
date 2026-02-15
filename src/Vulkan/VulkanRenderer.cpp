@@ -1,6 +1,7 @@
 #include "VulkanRenderer.hpp"
 
-#include "Vulkan/VulkanDevice.hpp"
+#include "VulkanDevice.hpp"
+#include "Model.hpp"
 #include "../Utils.hpp"
 
 #include <cstdint>
@@ -83,6 +84,7 @@ void Renderer::freeCommandBuffers() {
 
 void Renderer::recordCommandBuffer(VkCommandBuffer& commandBuffer,
 								 uint32_t imageIndex) const {
+	spdlog::info("recording command buffer");
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = 0;				   // Optional
@@ -99,7 +101,7 @@ void Renderer::recordCommandBuffer(VkCommandBuffer& commandBuffer,
 	renderPassInfo.framebuffer = mSwapChain->getFrameBuffer(imageIndex);
 	renderPassInfo.renderArea.offset = {0, 0};
 	renderPassInfo.renderArea.extent = mSwapChain->getSwapChainExtent();
-	VkClearValue clearColor = {{{0.0f, 0.5f, 0.5f, 1.0f}}};
+	VkClearValue clearColor = {{{0.5f, 0.5f, 0.5f, 1.0f}}};
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo,
@@ -118,11 +120,28 @@ void Renderer::recordCommandBuffer(VkCommandBuffer& commandBuffer,
 	scissor.offset = {0, 0};
 	scissor.extent = swapChainExtent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+	spdlog::info("drawing model");
+	mModel->bind(commandBuffer);
+	mModel->draw(commandBuffer);
+
 	vkCmdEndRenderPass(commandBuffer);
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
 		throw std::runtime_error("failed to record command buffer!");
 	}
+}
+
+void Renderer::loadModels() {
+	spdlog::info("attempting model loading");
+	std::vector<Model::Vertex> vertices {
+		{{0.5, -0.5}},
+		{{0.5, 0.5}},
+		{{-0.5, 0.5}}
+	};
+	spdlog::info("successfully created vertices");
+
+	mModel = std::make_unique<Model>(mDevice, vertices);
+	spdlog::info("successfully created model");
 }
 
 void Renderer::createGraphicsPipeline() {
@@ -186,13 +205,16 @@ void Renderer::createGraphicsPipeline() {
 #pragma endregion
 
 #pragma region VERTEX_INPUT_INFO
+	auto bindingDescriptions = Model::Vertex::getBindingDescriptions();
+	auto attributeDescriptions = Model::Vertex::getAttributeDescriptions();
+
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType =
 		VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = 0;
-	vertexInputInfo.pVertexBindingDescriptions = nullptr;  // Optional
-	vertexInputInfo.vertexAttributeDescriptionCount = 0;
-	vertexInputInfo.pVertexAttributeDescriptions = nullptr;	 // Optional
+	vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
+	vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();  // Optional
+	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();	 // Optional
 #pragma endregion
 
 #pragma region INPUT_ASSEMBLY

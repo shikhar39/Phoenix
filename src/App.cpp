@@ -10,6 +10,7 @@ App::~App() {
 }
 
 void App::run() {
+	mRenderer.loadModels();
 	spdlog::info("Starting Phoenix Engine app");
 	while (!mWindow.shouldClose()) {
 		glfwPollEvents();
