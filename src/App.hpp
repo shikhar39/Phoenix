@@ -22,15 +22,8 @@ public:
 
 	void run();
 private:
-	void createPipelineLayout();
-	void createPipeline();
-	
 	Vulkan::Window mWindow{WIDTH, HEIGHT, "Phoenix"};
 	Vulkan::Device mDevice{mWindow};
 	Vulkan::Renderer mRenderer{mWindow, mDevice};
-
-	// I'd say these are temporary.
-	VkPipelineLayout mPipelineLayout{VK_NULL_HANDLE};
-	VkPipeline mPipeline{VK_NULL_HANDLE};
 };
 }  // namespace PhoenixEngine
