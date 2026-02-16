@@ -5,16 +5,16 @@
 namespace PhoenixEngine {
 namespace Vulkan {
 std::vector<VkVertexInputAttributeDescription> Model::Vertex::getAttributeDescriptions() {
-    std::vector<VkVertexInputAttributeDescription> descriptions(1); 
+    std::vector<VkVertexInputAttributeDescription> descriptions(2); 
     descriptions[0].binding = 0;
     descriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
     descriptions[0].location = 0;
-    descriptions[0].offset = 0;
+    descriptions[0].offset = offsetof(Vertex, position);
 
-    // descriptions[1].binding = 0;
-    // descriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    // descriptions[1].location = 1;
-    // descriptions[1].offset = ??
+    descriptions[1].binding = 0;
+    descriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    descriptions[1].location = 1;
+    descriptions[1].offset = offsetof(Vertex, color);
 	return descriptions;
 }
 
@@ -38,7 +38,7 @@ Model::~Model() {
 }
 
 void Model::createVertexBuffers(const std::vector<Vertex>& vertices) {
-    spdlog::info("attemtpting buffer creation");
+    spdlog::info("attempting buffer creation");
     mVertexCount = static_cast<uint32_t>(vertices.size());
     assert(mVertexCount >= 3 && "Vertex count must be at least 3");
 

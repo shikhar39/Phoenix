@@ -134,10 +134,11 @@ void Renderer::recordCommandBuffer(VkCommandBuffer& commandBuffer,
 void Renderer::loadModels() {
 	spdlog::info("attempting model loading");
 	std::vector<Model::Vertex> vertices {
-		{{0.5, -0.5}},
-		{{0.5, 0.5}},
-		{{-0.5, 0.5}}
+		{{0.0, -0.5}, {1.0, 0.0, 0.0}},
+		{{0.5, 0.5}, {0.0, 1.0, 0.0}},
+		{{-0.5, 0.5}, {0.0, 0.0, 1.0}}
 	};
+
 	spdlog::info("successfully created vertices");
 
 	mModel = std::make_unique<Model>(mDevice, vertices);
