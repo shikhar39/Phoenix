@@ -2,6 +2,8 @@
 
 #include "App.hpp"
 
+#include "Vulkan/Pipeline.hpp"
+
 namespace PhoenixEngine {
 App::App() {
 }
@@ -19,4 +21,5 @@ void App::run() {
 
 	vkDeviceWaitIdle(mDevice.get());
 }
+
 }  // namespace PhoenixEngine
