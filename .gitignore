@@ -398,3 +398,24 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Engine Choice
+EngineChoice.h
+
+# Ext
+ext/vulkan
+ext/spdlog
+
+# Compiled shader files
+*.spv
+
+build
+
+*.sln
+.clang-format
+/.zed
+
+Makefile
+compile_commands.json
+/.idea
+/.vscode
